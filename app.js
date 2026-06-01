@@ -75,6 +75,9 @@ function startNewGame(difficulty) {
   gameState.human.campaignDiscounts = [];
   gameState.cpu.campaignDiscounts = [];
   
+  const viewScoreBtn = document.getElementById('btn-view-score');
+  if (viewScoreBtn) viewScoreBtn.classList.add('hidden');
+  
   // 1. 初始化並洗牌
   initializeDecks();
   
@@ -2825,16 +2828,32 @@ function showCardDetail(card) {
 
 // 更新玩家出牌區的軍力符號統計
 function updatePlayerSymbolCounts() {
-  const counts = { '步軍': 0, '水軍': 0, '騎軍': 0, '統御': 0, '斥侯': 0 };
-  let counselorCount = 0;
+  const activeCounts = { '步軍': 0, '水軍': 0, '騎軍': 0, '統御': 0, '斥侯': 0 };
+  let activeCounselorCount = 0;
+  
+  const totalCounts = { '步軍': 0, '水軍': 0, '騎軍': 0, '統御': 0, '斥侯': 0 };
+  let totalCounselorCount = 0;
+  
   const counselors = ["朱武", "蕭讓", "裴宣", "蔣敬"];
   
   gameState.human.playedArea.forEach(item => {
+    const isCounselor = counselors.includes(item.card.name) || (item.card.specialEffect && item.card.specialEffect.includes("梁山軍師群"));
+    
+    // 1. 總計累積 (只要打出就算)
+    if (isCounselor) {
+      totalCounselorCount++;
+    } else {
+      const allSyms = item.card.symbols || [];
+      allSyms.forEach(sym => {
+        if (totalCounts[sym] !== undefined) totalCounts[sym]++;
+      });
+    }
+    
+    // 2. 當前可用 (活躍 或 倒置)
     let syms = [];
     if (item.state === 'active') {
-      const isCounselor = counselors.includes(item.card.name) || (item.card.specialEffect && item.card.specialEffect.includes("梁山軍師群"));
       if (isCounselor) {
-        counselorCount++;
+        activeCounselorCount++;
       } else {
         syms = item.card.symbols || [];
       }
@@ -2843,31 +2862,37 @@ function updatePlayerSymbolCounts() {
     }
     
     syms.forEach(sym => {
-      if (counts[sym] !== undefined) counts[sym]++;
+      if (activeCounts[sym] !== undefined) activeCounts[sym]++;
     });
   });
   
-  const container = document.getElementById('player-symbol-counts');
-  if (!container) return;
-  
-  let html = '';
-  for (const [sym, count] of Object.entries(counts)) {
-    if (count > 0) {
-      let color = '#fff';
-      if (sym === '步軍') color = '#2ecc71';
-      else if (sym === '水軍') color = '#3498db';
-      else if (sym === '騎軍') color = '#e74c3c';
-      else if (sym === '統御') color = '#f39c12';
-      else if (sym === '斥侯') color = '#9b59b6';
-      
-      html += `<span style="background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px; font-size: 0.85rem; color: ${color}; border: 1px solid ${color};">${sym}: ${count}</span>`;
+  const renderCounts = (counts, cCount, containerId) => {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    let html = '';
+    for (const [sym, count] of Object.entries(counts)) {
+      if (count > 0) {
+        let color = '#fff';
+        if (sym === '步軍') color = '#2ecc71';
+        else if (sym === '水軍') color = '#3498db';
+        else if (sym === '騎軍') color = '#e74c3c';
+        else if (sym === '統御') color = '#f39c12';
+        else if (sym === '斥侯') color = '#9b59b6';
+        
+        html += `<span style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: ${color}; border: 1px solid ${color};">${sym}: ${count}</span>`;
+      }
     }
-  }
-  if (counselorCount > 0) {
-    html += `<span style="background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px; font-size: 0.85rem; color: #fff; border: 1px solid #aaa;">軍師: ${counselorCount}</span>`;
-  }
+    if (cCount > 0) {
+      html += `<span style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: #fff; border: 1px solid #aaa;">軍師: ${cCount}</span>`;
+    }
+    if (html === '') html = `<span style="font-size: 0.8rem; color: #666;">無</span>`;
+    
+    container.innerHTML = html;
+  };
   
-  container.innerHTML = html;
+  renderCounts(activeCounts, activeCounselorCount, 'player-symbol-counts-active');
+  renderCounts(totalCounts, totalCounselorCount, 'player-symbol-counts-total');
 }
 
 // 註冊 Event Listeners
@@ -2935,6 +2960,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // 查看盤面
   document.getElementById('view-board-btn').addEventListener('click', () => {
     document.getElementById('game-over-modal').classList.add('hidden');
-    showToast('請自由查看盤面。準備好時，可點擊上方「重新開局」返回主畫面。');
+    const viewScoreBtn = document.getElementById('btn-view-score');
+    if (viewScoreBtn) viewScoreBtn.classList.remove('hidden');
+    showToast('請自由查看盤面。準備好時，可點擊上方「查看計分板」或「重新開局」。');
   });
+
+  // 回看計分板
+  const viewScoreBtn = document.getElementById('btn-view-score');
+  if (viewScoreBtn) {
+    viewScoreBtn.addEventListener('click', () => {
+      document.getElementById('game-over-modal').classList.remove('hidden');
+      viewScoreBtn.classList.add('hidden');
+    });
+  }
 });

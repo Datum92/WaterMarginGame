@@ -61,6 +61,7 @@
         <span id="draw-points-badge" class="draw-points-badge hidden">剩餘抽牌點：<span id="draw-points-val">2</span> 點</span>
       </div>
       <div class="controls">
+        <button id="btn-view-score" class="btn-primary hidden" style="margin-right: 10px;">查看計分板</button>
         <button id="btn-reset" class="btn-secondary">重新開局</button>
       </div>
     </header>
@@ -185,9 +186,16 @@
               <div class="score-display">分數: <span id="player-score" class="score-val">0</span></div>
             </div>
           </div>
-          <div class="action-panel" style="display: flex; align-items: center; gap: 15px;">
-            <div id="player-symbol-counts" style="display: flex; gap: 5px; flex-wrap: wrap;"></div>
-            <span class="hand-count-badge">出牌區: <span id="player-played-count">0</span> / 12 張</span>
+          <div class="action-panel" style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+               <span style="font-size: 0.85rem; color: #ccc;">可用符號:</span>
+               <div id="player-symbol-counts-active" style="display: flex; gap: 5px; flex-wrap: wrap;"></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+               <span style="font-size: 0.85rem; color: #ccc;">總計累積:</span>
+               <div id="player-symbol-counts-total" style="display: flex; gap: 5px; flex-wrap: wrap;"></div>
+            </div>
+            <span class="hand-count-badge" style="margin-top: 2px;">出牌區: <span id="player-played-count">0</span> / 12 張</span>
           </div>
         </div>
         
