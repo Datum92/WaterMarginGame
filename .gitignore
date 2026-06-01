@@ -1,0 +1,12 @@
+# 排除系統與編輯器暫存檔
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+
+# 排除 Python 快取
+__pycache__/
+*.pyc
+
+# 排除 Node 模組（如果未來加入）
+node_modules/

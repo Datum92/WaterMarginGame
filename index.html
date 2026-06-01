@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>水滸卡牌戰記 - 戰部署與圖片渲染</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="水滸傳雙人卡牌對戰遊戲第一階段：專案初始化、本地資料載入與動態卡牌圖片路徑掛載。體驗天罡卡、地煞卡與戰役卡的史詩對決！">
+  
+  <!-- Modern Typography (Noto Serif TC for classic look, Outfit for English headers) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Background Ambient Glow -->
+  <div class="ambient-glow bg-glow-1"></div>
+  <div class="ambient-glow bg-glow-2"></div>
+
+  <!-- Start Menu overlay -->
+  <div id="start-menu" class="menu-overlay">
+    <div class="menu-container glass-card">
+      <div class="ink-splash"></div>
+      <h1 class="game-title">水滸卡牌戰記</h1>
+      <p class="game-subtitle">第一階段：資料解析與部署</p>
+      
+      <div class="difficulty-section">
+        <h3>選擇難易度</h3>
+        <div class="difficulty-options">
+          <button type="button" class="btn-diff active" data-difficulty="beginner" id="diff-beginner">
+            <span class="diff-title">初階</span>
+            <span class="diff-desc">適合新手，規則提示完整</span>
+          </button>
+          <button type="button" class="btn-diff" data-difficulty="intermediate" id="diff-intermediate">
+            <span class="diff-title">中階</span>
+            <span class="diff-desc">挑戰性適中，AI 具備基礎思維</span>
+          </button>
+          <button type="button" class="btn-diff" data-difficulty="advanced" id="diff-advanced">
+            <span class="diff-title">高階</span>
+            <span class="diff-desc">修羅難度，考驗排兵佈陣技巧</span>
+          </button>
+        </div>
+      </div>
+      
+      <button type="button" id="btn-start" class="btn-primary animate-pulse">開始遊戲</button>
+    </div>
+  </div>
+
+  <!-- Main Game Layout -->
+  <div id="game-container" class="hidden">
+    <!-- Header Control Bar -->
+    <header class="game-header glass-card">
+      <div class="logo">水滸卡牌戰記</div>
+      <div class="game-meta">
+        <span class="difficulty-badge" id="current-diff-badge">初階</span>
+        <span id="current-turn-badge" class="turn-badge human-turn">玩家回合</span>
+        <span id="action-status-badge" class="action-status-badge">軍略行動：未執行</span>
+        <span id="draw-points-badge" class="draw-points-badge hidden">剩餘抽牌點：<span id="draw-points-val">2</span> 點</span>
+      </div>
+      <div class="controls">
+        <button id="btn-reset" class="btn-secondary">重新開局</button>
+      </div>
+    </header>
+
+    <main class="game-grid">
+      <!-- 1. CPU Section (Top Layer) -->
+      <section id="cpu-area" class="board-layer glass-card">
+        <div class="layer-header">
+          <div class="player-info">
+            <span class="avatar cpu-avatar">官</span>
+            <div>
+              <h2 class="player-name">朝廷官軍 (CPU)</h2>
+              <div class="score-display">分數: <span id="cpu-score" class="score-val">0</span></div>
+            </div>
+          </div>
+          <div class="hand-count-badge">手牌: <span id="cpu-hand-count">0</span> 張</div>
+        </div>
+        
+        <!-- CPU Hand cards (Hidden / Face down) -->
+        <div class="hand-row-container">
+          <div id="cpu-hand" class="cards-row hidden-hand">
+            <!-- CPU Hand Card images rendered face-down -->
+          </div>
+        </div>
+        
+        <!-- CPU Played Area -->
+        <div class="played-section">
+          <h3>出牌區</h3>
+          <div id="cpu-played" class="cards-row played-row">
+            <!-- CPU Played Card images with transform states -->
+          </div>
+        </div>
+
+        <!-- CPU Won Campaigns Area -->
+        <div class="won-campaigns-section">
+          <h3>已奪取的戰役</h3>
+          <div id="cpu-won-campaigns" class="cards-row won-campaigns-row">
+            <!-- CPU Won Campaign Card images -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Central Display Section (Middle Layer) -->
+      <section id="center-area" class="board-layer central-display-layer glass-card">
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 10px; margin-bottom: 20px;">
+          <h2 style="margin: 0; font-family: 'Noto Serif TC', serif; font-size: 1.4rem; color: var(--color-gold); letter-spacing: 1px; border: none; padding: 0;">中央展示列</h2>
+          <button class="btn-primary-small btn-end-turn disabled" disabled style="padding: 4px 14px; font-size: 0.9rem; min-height: unset; height: auto; margin: 0;">結束回合</button>
+        </div>
+        
+        <div class="central-grid">
+          <!-- Row 1: Heaven + Earth Cards -->
+          <div class="deck-pair-row">
+            <!-- Heaven Cards Display (天罡) -->
+            <div class="deck-row deck-row-half">
+              <div class="deck-pile-info">
+                <span class="deck-badge badge-heaven">天罡卡堆</span>
+                <div class="deck-image-container">
+                  <img src="./assets/images/天罡卡牌背.png" alt="天罡卡牌背" class="deck-back">
+                  <span class="deck-count" id="heaven-deck-count">36</span>
+                </div>
+              </div>
+              <div id="center-heaven" class="center-cards-row">
+                <!-- 5 cards -->
+              </div>
+            </div>
+
+            <!-- Earth Cards Display (地煞) -->
+            <div class="deck-row deck-row-half">
+              <div class="deck-pile-info">
+                <span class="deck-badge badge-earth">地煞卡堆</span>
+                <div class="deck-image-container">
+                  <img src="./assets/images/地煞卡牌背.png" alt="地煞卡牌背" class="deck-back">
+                  <span class="deck-count" id="earth-deck-count">72</span>
+                </div>
+              </div>
+              <div id="center-earth" class="center-cards-row">
+                <!-- 5 cards -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 2: Major + Minor Campaigns -->
+          <div class="deck-pair-row">
+            <!-- Major Campaigns Display (重大戰役) -->
+            <div class="deck-row deck-row-half">
+              <div class="deck-pile-info">
+                <span class="deck-badge badge-major">重大戰役</span>
+                <div class="deck-image-container">
+                  <img src="./assets/images/大型戰役牌背.png" alt="大型戰役牌背" class="deck-back">
+                  <span class="deck-count" id="major-deck-count">6</span>
+                </div>
+              </div>
+              <div id="center-major" class="center-cards-row">
+                <!-- 2 cards -->
+              </div>
+            </div>
+
+            <!-- Minor Campaigns Display (小型戰役) -->
+            <div class="deck-row deck-row-half">
+              <div class="deck-pile-info">
+                <span class="deck-badge badge-minor">小型戰役</span>
+                <div class="deck-image-container">
+                  <img src="./assets/images/小型戰役牌背.png" alt="小型戰役牌背" class="deck-back">
+                  <span class="deck-count" id="minor-deck-count">15</span>
+                </div>
+              </div>
+              <div id="center-minor" class="center-cards-row">
+                <!-- 4 cards -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Player Section (Bottom Layer) -->
+      <section id="player-area" class="board-layer glass-card">
+        <div class="layer-header">
+          <div class="player-info">
+            <span class="avatar player-avatar">義</span>
+            <div>
+              <h2 class="player-name">梁山好漢 (玩家)</h2>
+              <div class="score-display">分數: <span id="player-score" class="score-val">0</span></div>
+            </div>
+          </div>
+          <div class="action-panel">
+            <span class="hand-count-badge">出牌區: <span id="player-played-count">0</span> / 12 張</span>
+          </div>
+        </div>
+        
+        <!-- Interactive Selection Banner (而外說明的介面) -->
+        <div id="interaction-banner" class="interaction-banner hidden" style="margin-bottom: 15px; border-radius: 8px;"></div>
+
+        <!-- Player Played Area -->
+        <div class="played-section">
+          <div class="section-sub-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <h3 style="margin: 0; font-size: 1rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+              我的出牌區 
+              <span class="tip-text">（點擊卡牌可旋轉測試狀態：活躍 ➔ 力竭 ➔ 倒置）</span>
+            </h3>
+            <button class="btn-primary-small btn-end-turn disabled" disabled style="padding: 4px 14px; font-size: 0.9rem; min-height: unset; height: auto; margin: 0;">結束回合</button>
+          </div>
+          <div id="player-played" class="cards-row played-row">
+            <!-- Player Played Card images with transform states -->
+          </div>
+        </div>
+
+        <!-- Player Hand Zone -->
+        <div class="hand-row-container player-hand-container">
+          <h3>我的手牌 <span class="tip-text">（點擊卡牌打出至出牌區）</span></h3>
+          <div id="player-hand" class="cards-row active-hand">
+            <!-- Player Hand Card images rendered face-up -->
+          </div>
+        </div>
+
+        <!-- Player Won Campaigns Area -->
+        <div class="won-campaigns-section" style="margin-top: 15px;">
+          <h3>我已奪取的戰役</h3>
+          <div id="player-won-campaigns" class="cards-row won-campaigns-row">
+            <!-- Player Won Campaign Card images -->
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Card Info Modal / Tooltip Overlay -->
+  <div id="card-modal" class="modal-overlay hidden">
+    <div class="modal-content glass-card">
+      <span class="close-btn" id="modal-close">&times;</span>
+      <div class="modal-body">
+        <div class="modal-img-container">
+          <img id="modal-card-img" src="" alt="卡牌放大">
+        </div>
+        <div class="modal-info">
+          <h2 id="modal-card-name">卡牌名稱</h2>
+          <p class="card-detail-type" id="modal-card-type">天罡卡</p>
+          <div class="info-block">
+            <strong>正向軍力符號：</strong>
+            <span id="modal-card-symbols">-</span>
+          </div>
+          <div class="info-block" id="modal-inverted-block">
+            <strong>倒置後軍力符號：</strong>
+            <span id="modal-card-inverted-symbols">-</span>
+          </div>
+          <div class="info-block" id="modal-cost-block">
+            <strong>出牌力竭代價：</strong>
+            <span id="modal-card-cost">-</span>
+          </div>
+          <div class="info-block" id="modal-trigger-block">
+            <strong>觸發條件：</strong>
+            <span id="modal-card-trigger">-</span>
+          </div>
+          <div class="info-block" id="modal-effect-block">
+            <strong>卡牌效果：</strong>
+            <span id="modal-card-effect">-</span>
+          </div>
+          <div class="info-block" id="modal-scoring-block">
+            <strong>計分條件：</strong>
+            <span id="modal-card-scoring">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Modal -->
+  <div id="game-over-modal" class="modal-overlay hidden">
+    <div class="modal-content glass-card" style="max-width: 650px; text-align: center;">
+      <h1 style="font-family: 'Noto Serif TC', serif; color: var(--color-gold); font-size: 2.2rem; margin-bottom: 5px; letter-spacing: 2px;">戰役落幕</h1>
+      <h2 id="winner-text" style="font-family: 'Noto Serif TC', serif; color: #2ecc71; font-size: 1.6rem; margin-bottom: 10px;"></h2>
+      
+      <div style="display: flex; gap: 20px; justify-content: space-between; margin-bottom: 25px; margin-top: 15px;">
+        <!-- Player Results -->
+        <div class="glass-card game-over-score-card" style="flex: 1; padding: 20px; border-color: rgba(212, 175, 55, 0.3); background: rgba(18, 18, 22, 0.6);">
+          <h3 style="color: var(--color-gold); margin-top: 0; font-family: 'Noto Serif TC', serif;">梁山好漢 (玩家)</h3>
+          <div style="font-size: 2rem; font-weight: bold; color: #f39c12; margin: 10px 0;" id="game-over-player-score">0 分</div>
+          <div style="text-align: left; font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary);">
+            <div>功績分數 (天罡卡): <span id="game-over-player-heaven-score">0</span> 分</div>
+            <div>戰功分數 (戰役卡): <span id="game-over-player-campaign-score">0</span> 分</div>
+            <div>已進場兵將數量: <span id="game-over-player-generals">0</span> 名</div>
+          </div>
+        </div>
+        
+        <!-- CPU Results -->
+        <div class="glass-card game-over-score-card" style="flex: 1; padding: 20px; border-color: rgba(255, 255, 255, 0.1); background: rgba(18, 18, 22, 0.6);">
+          <h3 style="color: var(--text-secondary); margin-top: 0; font-family: 'Noto Serif TC', serif;">朝廷官軍 (CPU)</h3>
+          <div style="font-size: 2rem; font-weight: bold; color: var(--text-secondary); margin: 10px 0;" id="game-over-cpu-score">0 分</div>
+          <div style="text-align: left; font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary);">
+            <div>功績分數 (天罡卡): <span id="game-over-cpu-heaven-score">0</span> 分</div>
+            <div>戰功分數 (戰役卡): <span id="game-over-cpu-campaign-score">0</span> 分</div>
+            <div>已進場兵將數量: <span id="game-over-cpu-generals">0</span> 名</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Player Evaluation -->
+      <div id="player-evaluation-container" class="glass-card" style="padding: 15px; margin-bottom: 20px; border-color: rgba(212, 175, 55, 0.2); background: rgba(18, 18, 22, 0.4);">
+        <div style="color: var(--color-gold); font-size: 0.9rem; margin-bottom: 5px; font-weight: bold;">玩家表現評價</div>
+        <div id="player-evaluation-text" style="font-size: 1.1rem; line-height: 1.5; color: #fff; font-family: 'Noto Serif TC', serif;"></div>
+      </div>
+
+      <!-- Score Breakdown Toggle -->
+      <div style="margin-bottom: 20px;">
+        <button id="breakdown-toggle-btn" onclick="document.getElementById('score-breakdown-panel').classList.toggle('hidden'); this.textContent = document.getElementById('score-breakdown-panel').classList.contains('hidden') ? '📊 顯示計分明細' : '📊 收起計分明細';"
+          style="background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.35); color: var(--color-gold); border-radius: 8px; padding: 7px 18px; cursor: pointer; font-size: 0.9rem; font-family: inherit; transition: background 0.2s;">
+          📊 顯示計分明細
+        </button>
+        <div id="score-breakdown-panel" class="hidden" style="margin-top: 12px; text-align: left; max-height: 280px; overflow-y: auto;">
+          <div style="font-size: 0.85rem; color: var(--color-gold); font-weight: bold; margin-bottom: 8px;">── 玩家計分明細 ──</div>
+          <div id="player-breakdown-detail" style="font-size: 0.85rem; line-height: 1.7; color: var(--text-secondary);"></div>
+          <div style="font-size: 0.85rem; color: rgba(255,255,255,0.35); font-weight: bold; margin: 10px 0 8px;">── CPU 計分明細 ──</div>
+          <div id="cpu-breakdown-detail" style="font-size: 0.85rem; line-height: 1.7; color: var(--text-secondary);"></div>
+        </div>
+      </div>
+
+      <button id="restart-btn" class="btn-primary" style="min-width: 180px; font-size: 1.1rem; padding: 10px 24px;">重回聚義廳 (重新開始)</button>
+    </div>
+  </div>
+
+  <!-- Load Scripts -->
+  <script src="assets/cards_data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
