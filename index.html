@@ -185,7 +185,8 @@
               <div class="score-display">分數: <span id="player-score" class="score-val">0</span></div>
             </div>
           </div>
-          <div class="action-panel">
+          <div class="action-panel" style="display: flex; align-items: center; gap: 15px;">
+            <div id="player-symbol-counts" style="display: flex; gap: 5px; flex-wrap: wrap;"></div>
             <span class="hand-count-badge">出牌區: <span id="player-played-count">0</span> / 12 張</span>
           </div>
         </div>
@@ -316,7 +317,10 @@
         </div>
       </div>
 
-      <button id="restart-btn" class="btn-primary" style="min-width: 180px; font-size: 1.1rem; padding: 10px 24px;">重回聚義廳 (重新開始)</button>
+      <div style="display: flex; gap: 15px; justify-content: center; margin-top: 10px;">
+        <button id="view-board-btn" class="btn-secondary" style="min-width: 140px; font-size: 1.1rem; padding: 10px 24px;">查看盤面</button>
+        <button id="restart-btn" class="btn-primary" style="min-width: 140px; font-size: 1.1rem; padding: 10px 24px;">重回聚義廳</button>
+      </div>
     </div>
   </div>
 

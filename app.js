@@ -66,6 +66,7 @@ function initializeDecks() {
 function startNewGame(difficulty) {
   gameState.difficulty = difficulty;
   gameState.gameStarted = true;
+  gameState.isGameOver = false;
   gameState.currentTurn = 'human';
   gameState.playerActionState = 'idle';
   gameState.turnFreeActionTaken = false;
@@ -209,6 +210,7 @@ function renderAll() {
   renderCenterDisplay();
   renderPlayerHand();
   renderPlayerPlayed();
+  updatePlayerSymbolCounts();
   renderCPUHand();
   renderCPUPlayed();
   
@@ -305,6 +307,7 @@ function renderAll() {
 
 // 結束回合與補充中央展示列
 function endTurn() {
+  if (gameState.isGameOver) return;
   if (gameState.currentTurn === 'human') {
     // 檢查若有尚未完成的選擇模式，不給結束
     if (gameState.selectionMode) {
@@ -369,6 +372,8 @@ function resolveGameEnd() {
   gameState.cpu.playedArea.forEach(item => {
     if (item.state === 'exhausted') item.state = item.previousState || 'active';
   });
+  
+  gameState.isGameOver = true;
   
   // 重新渲染以顯示復甦狀態
   renderAll();
@@ -747,7 +752,7 @@ function flashEarthEffect(cardWrapperEl, cx, cy) {
 
 // 延攬豪傑 (抽牌) 行動
 function recruitCard(card, sourceType, sourceEl) {
-  if (!gameState.gameStarted) return;
+  if (!gameState.gameStarted || gameState.isGameOver) return;
   
   if (gameState.currentTurn !== 'human') {
     showToast('現在是 CPU 的回合！');
@@ -1303,6 +1308,7 @@ function cancelCampaignParticipation() {
 
 // 確定參與戰役並扣除代價
 function confirmCampaignParticipation() {
+  if (gameState.isGameOver) return;
   const mode = gameState.selectionMode;
   if (!mode || mode.type !== 'campaignSelection') return;
   
@@ -2001,6 +2007,7 @@ function playEarthCardWithEffect(card, handIndex, isFreePlay, playerKey, onPlayF
 
 // 打出手牌至出牌區
 function playCard(index) {
+  if (gameState.isGameOver) return;
   if (gameState.currentTurn !== 'human') {
     showToast('現在是 CPU 的回合！');
     return;
@@ -2816,6 +2823,53 @@ function showCardDetail(card) {
   modal.classList.remove('hidden');
 }
 
+// 更新玩家出牌區的軍力符號統計
+function updatePlayerSymbolCounts() {
+  const counts = { '步軍': 0, '水軍': 0, '騎軍': 0, '統御': 0, '斥侯': 0 };
+  let counselorCount = 0;
+  const counselors = ["朱武", "蕭讓", "裴宣", "蔣敬"];
+  
+  gameState.human.playedArea.forEach(item => {
+    let syms = [];
+    if (item.state === 'active') {
+      const isCounselor = counselors.includes(item.card.name) || (item.card.specialEffect && item.card.specialEffect.includes("梁山軍師群"));
+      if (isCounselor) {
+        counselorCount++;
+      } else {
+        syms = item.card.symbols || [];
+      }
+    } else if (item.state === 'inverted') {
+      syms = item.card.invertedSymbols || [];
+    }
+    
+    syms.forEach(sym => {
+      if (counts[sym] !== undefined) counts[sym]++;
+    });
+  });
+  
+  const container = document.getElementById('player-symbol-counts');
+  if (!container) return;
+  
+  let html = '';
+  for (const [sym, count] of Object.entries(counts)) {
+    if (count > 0) {
+      let color = '#fff';
+      if (sym === '步軍') color = '#2ecc71';
+      else if (sym === '水軍') color = '#3498db';
+      else if (sym === '騎軍') color = '#e74c3c';
+      else if (sym === '統御') color = '#f39c12';
+      else if (sym === '斥侯') color = '#9b59b6';
+      
+      html += `<span style="background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px; font-size: 0.85rem; color: ${color}; border: 1px solid ${color};">${sym}: ${count}</span>`;
+    }
+  }
+  if (counselorCount > 0) {
+    html += `<span style="background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px; font-size: 0.85rem; color: #fff; border: 1px solid #aaa;">軍師: ${counselorCount}</span>`;
+  }
+  
+  container.innerHTML = html;
+}
+
 // 註冊 Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
   // 難易度按鈕選擇
@@ -2876,5 +2930,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('game-container').classList.add('hidden');
     document.getElementById('start-menu').classList.remove('hidden');
     gameState.gameStarted = false;
+  });
+  
+  // 查看盤面
+  document.getElementById('view-board-btn').addEventListener('click', () => {
+    document.getElementById('game-over-modal').classList.add('hidden');
+    showToast('請自由查看盤面。準備好時，可點擊上方「重新開局」返回主畫面。');
   });
 });
