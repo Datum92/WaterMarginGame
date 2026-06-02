@@ -44,7 +44,10 @@
         </div>
       </div>
       
-      <button type="button" id="btn-start" class="btn-primary animate-pulse">開始遊戲</button>
+      <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+        <button type="button" id="btn-start" class="btn-primary animate-pulse" style="min-width: 140px;">開始遊戲</button>
+        <button type="button" id="btn-tutorial" class="btn-secondary" style="min-width: 140px;">遊戲教學</button>
+      </div>
     </div>
   </div>
 
@@ -349,8 +352,24 @@
     </div>
   </div>
 
+  <!-- Tutorial Overlay System -->
+  <div id="tutorial-overlay" class="hidden">
+    <div id="tutorial-highlight-mask"></div>
+    <div id="tutorial-dialog" class="glass-card">
+      <div id="tutorial-content" class="tutorial-body"></div>
+      <div class="tutorial-controls">
+        <button id="btn-tutorial-prev" class="btn-secondary">上一頁</button>
+        <div style="display: flex; gap: 10px;">
+          <button id="btn-tutorial-close" class="btn-secondary" style="background: rgba(231, 76, 60, 0.2); border-color: #e74c3c;">結束教學</button>
+          <button id="btn-tutorial-next" class="btn-primary">下一頁</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Load Scripts -->
   <script src="assets/cards_data.js?v=3"></script>
   <script src="app.js?v=3"></script>
+  <script src="tutorial.js?v=1"></script>
 </body>
 </html>
