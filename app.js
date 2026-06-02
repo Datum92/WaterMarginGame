@@ -1295,7 +1295,12 @@ function renderInteractionBanner() {
     }
     
     // 3. 格式化已選武將資訊
+    const stats = getEffectiveSymbols('human');
     const selectedCards = mode.selectedIndices.map(idx => {
+      const effCard = stats.activeCards.find(c => c.index === idx);
+      if (effCard) return effCard;
+      
+      // Fallback for exhausted or other edge cases
       const item = gameState.human.playedArea[idx];
       return {
         index: idx,
@@ -2584,7 +2589,7 @@ function canPayCampaignRequirements(activeCards, reqs) {
     if (cardIdx >= activeCards.length) return;
     
     const card = activeCards[cardIdx];
-    const isCounselor = counselors.includes(card.name);
+    const isCounselor = counselors.includes(card.name) && card.symbols.length > 1;
     
     // 決策一：包含當前卡牌
     if (isCounselor) {
