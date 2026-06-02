@@ -1,113 +1,245 @@
-// === Tutorial System ===
-const tutorialSteps = [
-  {
-    targetId: ['player-area', 'center-area'],
-    content: "<h3>Step 1：開局與介面介紹</h3><p>歡迎來到《星墜梁山》！雙方開局各有 7 張起始手牌（5 張地煞與 2 張天罡），並有各自的出牌區。率先集結 12 名兵將的一方將觸發遊戲結束。</p>"
-  },
-  {
-    targetId: null,
-    content: "<h3>Step 2：七大軍力符號</h3><p>遊戲核心為 7 種軍力符號：👑統御、⛵水軍、🛡️步軍、🐎騎軍、👁️斥侯、🍞後勤、⚔️戰役。這些符號是您調兵遣將與爭奪戰功的基礎。</p><img src='./遊戲教學圖片/軍力符號.png'>"
-  },
-  {
-    targetId: 'center-area',
-    content: "<h3>Step 3：軍略行動一｜延攬豪傑 (抽牌)</h3><p>每回合您有 2 點抽牌點。拿取一張地煞卡消耗 1 點，天罡卡消耗 2 點。拿取後卡牌進入手牌，且展示列需待回合結束才會補充。</p><img src='./遊戲教學圖片/軍略行動-延攬豪傑：獲取卡片.png'>"
-  },
-  {
-    targetId: 'player-area',
-    content: "<h3>Step 4：軍略行動二｜派遣地煞與卡牌效果</h3><img src='./遊戲教學圖片/軍略行動-派遣兵將（打出一張卡片）.png'><p>打出地煞卡可獲得 1 枚軍力，並帶有強大的一次性效果。效果分為兩個階段：</p><br><p><b>【觸發條件】</b>：發動效果前必須滿足的條件。常見有：「棄掉一張具備特定軍力的手牌」、「力竭出牌區一位特定軍力的兵將」、或是「出牌區已具備特定軍力」。</p><img src='./遊戲教學圖片/卡牌效果-觸發條件.png'><br><p><b>【立即效果】</b>：滿足條件後立即發動。常見包含：獲得額外抽牌點、復甦已力竭的兵將、立即從手牌再打出一張卡片、或將此卡上下倒置以改變軍力符號。</p><img src='./遊戲教學圖片/卡牌效果-立即效果.png'>"
-  },
-  {
-    targetId: ['player-played', 'player-hand'],
-    content: "<h3>Step 5：軍略行動二｜派遣天罡與力竭代價</h3><p>打出天罡卡需支付嚴格的<b>【代價】</b>。您必須將出牌區符合指定軍力且狀態為「活躍（直立）」的兵將轉為「力竭（橫置 90 度）」。成功後可獲得 2 枚軍力，以及遊戲結束時的專屬計分條件。</p><img src='./遊戲教學圖片/兵將狀態：活躍或力竭.png'>"
-  },
-  {
-    targetId: null,
-    content: "<h3>Step 6：特殊卡片機制 (軍師與阮氏兄弟)</h3><div style='display:flex; gap:10px; margin-bottom:10px;'><img src='./assets/images/cards/EF_037_朱武.png' style='width:45%; margin:0;'><img src='./assets/images/cards/EF_027_阮小二.png' style='width:45%; margin:0;'></div><p>軍師群具備「雙重符號」，計分時可擇一最優計算；而阮氏三兄弟則具備「符號轉化」的常駐光環，能將全場水軍視為特定符號！</p><img src='./遊戲教學圖片/特殊卡片說明.png'>"
-  },
-  {
-    targetId: ['center-major', 'center-minor'],
-    content: "<h3>Step 7：自由行動｜參與戰役</h3><p>回合開始或結束前，若出牌區的「活躍軍力」滿足戰役卡需求，即可將對應兵將力竭以獲取戰功。若是小型戰役，還會附帶額外的【立即效果】獎勵。</p><img src='./遊戲教學圖片/自由行動：參與戰役.png'>"
-  },
-  {
-    targetId: null,
-    content: "<h3>Step 8：遊戲落幕與最終計分</h3><p>當任一方出牌區達 12 張兵將時觸發最後一輪。結算時全體兵將復甦，加總天罡功績與戰役戰功分數。同分比對兵將數量（少者勝），再同分則由後手勝出。</p><img src='./遊戲教學圖片/遊戲結束天罡卡計分方式.png'>"
+// === Interactive Tutorial System ===
+
+let isTutorialMode = false;
+let currentTutorialStep = 1;
+
+// Hook renderAll to re-apply targets after UI updates
+const originalRenderAll = window.renderAll;
+window.renderAll = function() {
+  if (typeof originalRenderAll === 'function') {
+    originalRenderAll();
   }
-];
+  if (isTutorialMode) {
+    applyTutorialStepLogic();
+  }
+};
 
-let currentTutorialStep = 0;
-
-function startTutorial() {
+function initTutorialMode() {
   document.getElementById('start-menu').classList.add('hidden');
   document.getElementById('game-container').classList.remove('hidden');
   
-  // 開始一場初階遊戲作為教學盤面
   if (typeof startNewGame === 'function') {
     startNewGame('beginner');
   }
+
+  isTutorialMode = true;
+  currentTutorialStep = 1;
+
+  // 強制覆寫牌局
+  setupScriptedScenario();
   
-  document.getElementById('tutorial-overlay').classList.remove('hidden');
-  currentTutorialStep = 0;
-  renderTutorialStep();
+  // 啟動遮罩與對話框
+  const mask = document.getElementById('tutorial-mask');
+  const dialog = document.getElementById('tutorial-dialog-container');
+  if (mask) mask.classList.remove('hidden');
+  if (dialog) dialog.classList.remove('hidden');
+  
+  // 重新渲染畫面以套用被覆寫的資料
+  window.renderAll();
 }
 
-function clearTutorialHighlights() {
-  document.querySelectorAll('.tutorial-highlight').forEach(el => {
-    el.classList.remove('tutorial-highlight');
+function setupScriptedScenario() {
+  // 玩家手牌：1 張地煞卡（編號46 蕭讓）、1 張天罡卡（編號03 吳用）
+  const xiaoRang = earthCards.find(c => c.id === 'EF_046');
+  const wuYong = heavenCards.find(c => c.id === 'HF_003');
+  
+  // 玩家出牌區：1 張具備「統御」的地煞卡（例如 EF_037 朱武）
+  const zhuWu = earthCards.find(c => c.id === 'EF_037');
+  const activeZhuWu = { ...zhuWu, isExhausted: false };
+
+  gameState.human.hand = [ { ...xiaoRang }, { ...wuYong } ];
+  gameState.human.playedArea = [ activeZhuWu ];
+  
+  // 中央展示列：只顯示 1 張地煞卡、1 張天罡卡
+  const someEarth = earthCards.find(c => c.id === 'EF_001');
+  const someHeaven = heavenCards.find(c => c.id === 'HF_001');
+  gameState.center.earth = [ { ...someEarth } ];
+  gameState.center.heaven = [ { ...someHeaven } ];
+  
+  // 戰役卡區：只顯示 1 張小型戰役卡（條件需為 統御x1, 後勤x1）
+  const minorCampaign = minorCampaignCards.find(c => c.targets && c.targets.includes('統御') && c.targets.includes('後勤'));
+  gameState.center.minorCampaigns = [ 
+    minorCampaign || {
+      id: 'TUTORIAL_CAMPAIGN',
+      type: '小型戰役',
+      name: '糧草爭奪戰',
+      targets: ['統御', '後勤'],
+      effect: '無',
+      score: 1,
+      image: './assets/images/小型戰役牌背.png'
+    } 
+  ];
+  gameState.center.majorCampaigns = []; // 清空重大戰役
+
+  // 隱藏對手的東西，讓他看起來乾淨一點
+  gameState.cpu.handCount = 0;
+  gameState.cpu.playedArea = [];
+  gameState.cpu.score = 0;
+  gameState.human.score = 0;
+}
+
+function setDialog(text, btnText = null, btnAction = null) {
+  const textEl = document.getElementById('tutorial-dialog-text');
+  const actionBtn = document.getElementById('btn-tutorial-action');
+  
+  if (textEl) textEl.innerHTML = text;
+  
+  if (btnText && actionBtn) {
+    actionBtn.textContent = btnText;
+    actionBtn.classList.remove('hidden');
+    actionBtn.onclick = () => {
+      actionBtn.classList.add('hidden');
+      if (btnAction) btnAction();
+    };
+  } else if (actionBtn) {
+    actionBtn.classList.add('hidden');
+  }
+}
+
+function clearTargets() {
+  document.querySelectorAll('.tutorial-target').forEach(el => {
+    el.classList.remove('tutorial-target');
   });
 }
 
-function renderTutorialStep() {
-  clearTutorialHighlights();
-  const step = tutorialSteps[currentTutorialStep];
+function applyTutorialStepLogic() {
+  clearTargets();
   
-  if (step.targetId) {
-    const ids = Array.isArray(step.targetId) ? step.targetId : [step.targetId];
-    ids.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.classList.add('tutorial-highlight');
+  if (currentTutorialStep === 1) {
+    setDialog('歡迎來到《水滸傳》！我們為你準備了特定的牌局，請點擊「開始演練」。', '開始演練', () => {
+      currentTutorialStep = 2;
+      window.renderAll();
     });
   }
-  
-  document.getElementById('tutorial-content').innerHTML = step.content;
-  
-  document.getElementById('btn-tutorial-prev').disabled = currentTutorialStep === 0;
-  
-  const nextBtn = document.getElementById('btn-tutorial-next');
-  if (currentTutorialStep === tutorialSteps.length - 1) {
-    nextBtn.textContent = '完成教學';
-    nextBtn.onclick = endTutorial;
-  } else {
-    nextBtn.textContent = '下一頁';
-    nextBtn.onclick = () => {
-      currentTutorialStep++;
-      renderTutorialStep();
-    };
+  else if (currentTutorialStep === 2) {
+    setDialog('你有 2 點抽牌點。請點擊中央展示列的地煞卡（耗 1 點）將其延攬至手牌。');
+    const earthCardEl = document.querySelector('#center-earth .card');
+    if (earthCardEl) {
+      earthCardEl.classList.add('tutorial-target');
+      earthCardEl.addEventListener('click', () => {
+        // Delay to allow original game logic to process
+        setTimeout(() => {
+          currentTutorialStep = 3;
+          window.renderAll();
+        }, 200);
+      }, {once: true});
+    } else {
+      // 找不到卡片，可能已經被拿走
+      currentTutorialStep = 3;
+      setTimeout(() => applyTutorialStepLogic(), 100);
+    }
+  }
+  else if (currentTutorialStep === 3) {
+    setDialog('現在，請點擊手牌中的地煞卡【蕭讓】（具備 🛡️步軍 / 🍞後勤）。打出地煞卡可立即獲得軍力與發動效果！');
+    const handCards = document.querySelectorAll('#player-hand .card');
+    let found = false;
+    handCards.forEach(cardEl => {
+      if (cardEl.dataset.id === 'EF_046') {
+        cardEl.classList.add('tutorial-target');
+        found = true;
+        cardEl.addEventListener('click', () => {
+          setTimeout(() => {
+            currentTutorialStep = 4;
+            window.renderAll();
+          }, 200);
+        }, {once: true});
+      }
+    });
+    
+    if (!found && gameState.human.playedArea.some(c => c.id === 'EF_046')) {
+        currentTutorialStep = 4;
+        applyTutorialStepLogic();
+    }
+  }
+  else if (currentTutorialStep === 4) {
+    setDialog('天罡卡能力強大，但需要支付【代價】。請點擊手牌中的天罡卡【吳用】（需 👑統御 作為代價）。');
+    const handCards = document.querySelectorAll('#player-hand .card');
+    let found = false;
+    handCards.forEach(cardEl => {
+      if (cardEl.dataset.id === 'HF_003') {
+        cardEl.classList.add('tutorial-target');
+        found = true;
+        cardEl.addEventListener('click', () => {
+          setTimeout(() => {
+            currentTutorialStep = 4.5;
+            window.renderAll();
+          }, 200);
+        }, {once: true});
+      }
+    });
+    
+    if (!found && gameState.selectionMode && gameState.selectionMode.type === 'exhaustCost') {
+        currentTutorialStep = 4.5;
+        applyTutorialStepLogic();
+    } else if (!found && gameState.human.playedArea.some(c => c.id === 'HF_003')) {
+        currentTutorialStep = 5;
+        applyTutorialStepLogic();
+    }
+  }
+  else if (currentTutorialStep === 4.5) {
+    setDialog('請點擊你出牌區中具備 👑統御 符號的兵將，將其「力竭 (橫置)」以完成出牌。');
+    const playedCards = document.querySelectorAll('#player-played .card');
+    playedCards.forEach(cardEl => {
+      const cardData = gameState.human.playedArea[parseInt(cardEl.dataset.index)];
+      if (cardData && !cardData.isExhausted && cardData.symbols && cardData.symbols.includes('統御')) {
+        cardEl.classList.add('tutorial-target');
+        cardEl.addEventListener('click', () => {
+          setTimeout(() => {
+            currentTutorialStep = 5;
+            window.renderAll();
+          }, 400);
+        }, {once: true});
+      }
+    });
+    
+    if (gameState.human.playedArea.some(c => c.id === 'HF_003')) {
+        currentTutorialStep = 5;
+        applyTutorialStepLogic();
+    }
+  }
+  else if (currentTutorialStep === 5) {
+    setDialog('你目前的活躍軍力滿足了戰役需求！請點擊上方的【小型戰役卡】。');
+    const campaignEl = document.querySelector('#center-minor .card');
+    if (campaignEl) {
+      campaignEl.classList.add('tutorial-target');
+      campaignEl.addEventListener('click', () => {
+        setTimeout(() => {
+          currentTutorialStep = 6;
+          window.renderAll();
+        }, 800);
+      }, {once: true});
+    } else {
+        currentTutorialStep = 6;
+        applyTutorialStepLogic();
+    }
+  }
+  else if (currentTutorialStep === 6) {
+    setDialog('恭喜完成基礎演練！正式遊戲中，先集滿 12 張兵將即觸發結算。請點擊「結束教學」。', '結束教學', exitTutorialMode);
   }
 }
 
-function endTutorial() {
-  document.getElementById('tutorial-overlay').classList.add('hidden');
-  clearTutorialHighlights();
+function exitTutorialMode() {
+  isTutorialMode = false;
+  const mask = document.getElementById('tutorial-mask');
+  const dialog = document.getElementById('tutorial-dialog-container');
+  if (mask) mask.classList.add('hidden');
+  if (dialog) dialog.classList.add('hidden');
+  clearTargets();
+  
+  document.getElementById('game-container').classList.add('hidden');
+  document.getElementById('start-menu').classList.remove('hidden');
 }
 
+// Bind events
 document.addEventListener('DOMContentLoaded', () => {
   const btnTutorial = document.getElementById('btn-tutorial');
   if (btnTutorial) {
-    btnTutorial.addEventListener('click', startTutorial);
+    btnTutorial.replaceWith(btnTutorial.cloneNode(true));
+    document.getElementById('btn-tutorial').addEventListener('click', initTutorialMode);
   }
   
-  const btnPrev = document.getElementById('btn-tutorial-prev');
-  if (btnPrev) {
-    btnPrev.addEventListener('click', () => {
-      if (currentTutorialStep > 0) {
-        currentTutorialStep--;
-        renderTutorialStep();
-      }
-    });
-  }
-  
-  const btnClose = document.getElementById('btn-tutorial-close');
-  if (btnClose) {
-    btnClose.addEventListener('click', endTutorial);
+  const btnAbort = document.getElementById('btn-tutorial-abort');
+  if (btnAbort) {
+    btnAbort.addEventListener('click', exitTutorialMode);
   }
 });

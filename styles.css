@@ -1195,56 +1195,52 @@ body {
   100% { opacity: 0; }
 }
 
-/* Tutorial System */
-#tutorial-overlay {
+/* Interactive Tutorial System */
+.tutorial-mask {
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;
-  z-index: 9999;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background: rgba(0, 0, 0, 0.7);
   pointer-events: auto;
+  z-index: 999;
 }
-#tutorial-highlight-mask {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.75);
-  z-index: 1;
+.tutorial-target {
+  position: relative !important;
+  z-index: 1000 !important;
+  pointer-events: auto !important;
+  box-shadow: 0 0 15px 5px rgba(255, 255, 0, 0.8), 0 0 30px rgba(212, 175, 55, 0.6) !important;
+  border-radius: 8px;
+  animation: pulse-glow 1.5s infinite alternate;
 }
-#tutorial-dialog {
-  position: relative;
-  z-index: 2;
+@keyframes pulse-glow {
+  from { box-shadow: 0 0 10px 2px rgba(255,255,0,0.6); }
+  to { box-shadow: 0 0 20px 8px rgba(255,255,0,1); }
+}
+#tutorial-dialog-container {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
   width: 90%;
   max-width: 600px;
   background: rgba(20, 20, 25, 0.95);
-  border: 1px solid var(--color-gold);
+  border: 2px solid var(--color-gold);
   border-radius: 12px;
-  padding: 25px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-}
-.tutorial-body {
-  font-family: 'Noto Serif TC', serif;
-  font-size: 1.1rem;
-  line-height: 1.6;
+  padding: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.9);
   color: #fff;
-  margin-bottom: 20px;
-}
-.tutorial-body img {
-  max-width: 100%;
-  border-radius: 6px;
-  margin-top: 10px;
-  border: 1px solid rgba(255,255,255,0.2);
-}
-.tutorial-controls {
+  font-family: 'Noto Serif TC', serif;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 15px;
+  pointer-events: auto;
 }
-.tutorial-highlight {
-  position: relative !important;
-  z-index: 10000 !important;
-  box-shadow: 0 0 0 4px var(--color-gold), 0 0 30px rgba(212, 175, 55, 0.6) !important;
-  background-color: rgba(30,30,30,0.95) !important;
-  border-radius: 8px;
-  pointer-events: none !important;
+#tutorial-dialog-text {
+  font-size: 1.15rem;
+  line-height: 1.6;
+}
+.tutorial-btn-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
