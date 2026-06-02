@@ -9,7 +9,7 @@ const heavenCards = [
       "統御"
     ],
     "exhaustCost": "統御",
-    "scoringCondition": "每組 [統御 + 步軍 + 騎軍 + 斥侯 + 戰役] 獲得 8 分",
+    "scoringCondition": "每組 [統御 + 步軍 + 騎軍 + 斥侯+水軍 +後勤 ] 獲得 8 分",
     "specialEffect": "-",
     "originalImage": "EF_001_宋江.png"
   },
@@ -74,7 +74,7 @@ const heavenCards = [
       "騎軍"
     ],
     "exhaustCost": "步軍",
-    "scoringCondition": "每組 [步軍 + 步軍 + 騎軍] 獲得 6 分",
+    "scoringCondition": "每組 [步軍 + 步軍 + 騎軍+騎軍] 獲得 6 分",
     "specialEffect": "-",
     "originalImage": "EF_006_林冲.png"
   },
@@ -87,7 +87,7 @@ const heavenCards = [
       "騎軍"
     ],
     "exhaustCost": "步軍",
-    "scoringCondition": "每組 [統御 + 統御 + 統御] 獲得 5 分",
+    "scoringCondition": "每組 [騎軍 +騎軍+騎軍] 獲得 5 分",
     "specialEffect": "-",
     "originalImage": "EF_007_秦明.png"
   },
@@ -113,7 +113,7 @@ const heavenCards = [
       "騎軍"
     ],
     "exhaustCost": "騎軍",
-    "scoringCondition": "每組 [步軍] 獲得 3 分",
+    "scoringCondition": "每組 [步軍+斥侯] 獲得 3 分",
     "specialEffect": "-",
     "originalImage": "EF_009_花榮.png"
   },
@@ -126,7 +126,7 @@ const heavenCards = [
       "後勤"
     ],
     "exhaustCost": "後勤",
-    "scoringCondition": "每組 [戰役 + 後勤] 獲得 3 分",
+    "scoringCondition": "每組 [斥侯 + 後勤] 獲得 3 分",
     "specialEffect": "-",
     "originalImage": "EF_010_柴進.png"
   },
@@ -243,7 +243,7 @@ const heavenCards = [
       "騎軍"
     ],
     "exhaustCost": "後勤",
-    "scoringCondition": "每組 [騎軍 + 騎軍 + 騎軍] 獲得 5 分",
+    "scoringCondition": "每組 [統御 + 騎軍 + 騎軍] 獲得 5 分",
     "specialEffect": "-",
     "originalImage": "EF_019_索超.png"
   },
@@ -330,7 +330,7 @@ const heavenCards = [
     "type": "天罡卡",
     "name": "李俊",
     "symbols": [
-      "騎軍",
+      "統御",
       "水軍"
     ],
     "exhaustCost": "後勤",
@@ -348,7 +348,7 @@ const heavenCards = [
     ],
     "exhaustCost": "騎軍",
     "scoringCondition": "-",
-    "specialEffect": "打出此卡後，只要此兵將保持活躍，你的所有兵將所具備的水軍符號便可以視為統御符號來使用 (包含此卡自身)。此能力在遊戲結束計分時同樣有效。",
+    "specialEffect": "打出此卡後，只要此兵將保持活躍，你的所有兵將所具備的水軍符號便可以視為騎軍符號來使用 (包含此卡自身)。此能力在遊戲結束計分時同樣有效。",
     "originalImage": "EF_027_阮小二.png"
   },
   {
@@ -1579,7 +1579,7 @@ const campaignCards = [
     "symbols": [
       "戰役"
     ],
-    "conditionText": "步軍x2, 騎軍x1",
+    "conditionText": "步軍x2,騎軍x1",
     "requirements": {
       "步軍": 2,
       "騎軍": 1
