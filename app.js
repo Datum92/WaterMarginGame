@@ -2692,9 +2692,6 @@ function resolveCampaignReward(campaignCard) {
   }
 }
 
-
-
-
 // DFS bipartite matching to match required symbols (targets) to available symbol slots
 function canMatchAll(slots, targets) {
   function dfs(targetIdx, visitedSlots) {
@@ -2714,6 +2711,67 @@ function canMatchAll(slots, targets) {
     return false;
   }
   return dfs(0, new Set());
+}
+
+function updatePlayerSymbolCounts() {
+  const activeCounts = { '步軍': 0, '水軍': 0, '騎軍': 0, '統御': 0, '斥侯': 0, '後勤': 0 };
+  const totalCounts = { '步軍': 0, '水軍': 0, '騎軍': 0, '統御': 0, '斥侯': 0, '後勤': 0 };
+  
+  const stats = getEffectiveSymbols('human');
+  
+  stats.activeSymbols.forEach(sym => {
+    if (activeCounts[sym] !== undefined) activeCounts[sym]++;
+  });
+  stats.totalSymbols.forEach(sym => {
+    if (totalCounts[sym] !== undefined) totalCounts[sym]++;
+  });
+  
+  const cpuActiveCounts = { '步軍': 0, '水軍': 0, '騎軍': 0, '統御': 0, '斥侯': 0, '後勤': 0 };
+  const cpuTotalCounts = { '步軍': 0, '水軍': 0, '騎軍': 0, '統御': 0, '斥侯': 0, '後勤': 0 };
+  const cpuStats = getEffectiveSymbols('cpu');
+  cpuStats.activeSymbols.forEach(sym => {
+    if (cpuActiveCounts[sym] !== undefined) cpuActiveCounts[sym]++;
+  });
+  cpuStats.totalSymbols.forEach(sym => {
+    if (cpuTotalCounts[sym] !== undefined) cpuTotalCounts[sym]++;
+  });
+  
+  const renderCounts = (counts, cCount, containerId) => {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    let html = '';
+    for (const [sym, count] of Object.entries(counts)) {
+      if (count > 0) {
+        let color = '#fff';
+        if (sym === '步軍') color = '#2ecc71';
+        else if (sym === '水軍') color = '#3498db';
+        else if (sym === '騎軍') color = '#e74c3c';
+        else if (sym === '統御') color = '#f39c12';
+        else if (sym === '斥侯') color = '#9b59b6';
+        else if (sym === '後勤') color = '#1abc9c';
+        
+        html += `<span style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: ${color}; border: 1px solid ${color};">${sym}: ${count}</span>`;
+      }
+    }
+    if (cCount > 0) {
+      html += `<span style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: #fff; border: 1px solid #aaa;">軍師: ${cCount}</span>`;
+    }
+    if (html === '') html = `<span style="font-size: 0.8rem; color: #666;">無</span>`;
+    
+    container.innerHTML = html;
+  };
+  
+  renderCounts(activeCounts, stats.activeCounselorCount, 'player-symbol-counts-active');
+  renderCounts(totalCounts, stats.totalCounselorCount, 'player-symbol-counts-total');
+  renderCounts(cpuActiveCounts, cpuStats.activeCounselorCount, 'cpu-symbol-counts-active');
+  renderCounts(cpuTotalCounts, cpuStats.totalCounselorCount, 'cpu-symbol-counts-total');
+  
+  const playedCountEl = document.getElementById('player-played-count');
+  if (playedCountEl) playedCountEl.textContent = gameState.human.playedArea.length;
+  
+  const cpuPlayedCountEl = document.getElementById('cpu-played-count');
+  if (cpuPlayedCountEl) cpuPlayedCountEl.textContent = gameState.cpu.playedArea.length;
 }
 
 // Find maximum groups of a pattern from available slots

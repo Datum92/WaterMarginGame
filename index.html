@@ -24,8 +24,7 @@
   <div id="start-menu" class="menu-overlay">
     <div class="menu-container glass-card">
       <div class="ink-splash"></div>
-      <h1 class="game-title">水滸卡牌戰記</h1>
-      <p class="game-subtitle">第一階段：資料解析與部署</p>
+      <h1 class="game-title">星墜涼山</h1>
       
       <div class="difficulty-section">
         <h3>選擇難易度</h3>
@@ -53,7 +52,7 @@
   <div id="game-container" class="hidden">
     <!-- Header Control Bar -->
     <header class="game-header glass-card">
-      <div class="logo">水滸卡牌戰記</div>
+      <div class="logo">星墜涼山</div>
       <div class="game-meta">
         <span class="difficulty-badge" id="current-diff-badge">初階</span>
         <span id="current-turn-badge" class="turn-badge human-turn">玩家回合</span>
@@ -73,17 +72,41 @@
           <div class="player-info">
             <span class="avatar cpu-avatar">官</span>
             <div>
-              <h2 class="player-name">朝廷官軍 (CPU)</h2>
+              <h2 class="player-name">朝廷軍官 (CPU)</h2>
               <div class="score-display">分數: <span id="cpu-score" class="score-val">0</span></div>
             </div>
           </div>
-          <div class="hand-count-badge">手牌: <span id="cpu-hand-count">0</span> 張</div>
+          <div class="action-panel" style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+               <span style="font-size: 0.85rem; color: #ccc;">可用符號:</span>
+               <div id="cpu-symbol-counts-active" style="display: flex; gap: 5px; flex-wrap: wrap;"></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+               <span style="font-size: 0.85rem; color: #ccc;">總計累積:</span>
+               <div id="cpu-symbol-counts-total" style="display: flex; gap: 5px; flex-wrap: wrap;"></div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <span class="hand-count-badge" style="margin-top: 2px;">手牌: <span id="cpu-hand-count">0</span> 張</span>
+              <span class="hand-count-badge" style="margin-top: 2px;">出牌區: <span id="cpu-played-count">0</span> / 12 張</span>
+            </div>
+          </div>
         </div>
         
-        <!-- CPU Hand cards (Hidden / Face down) -->
-        <div class="hand-row-container">
-          <div id="cpu-hand" class="cards-row hidden-hand">
-            <!-- CPU Hand Card images rendered face-down -->
+        <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 15px;">
+          <!-- CPU Hand cards (Hidden / Face down) -->
+          <div class="hand-row-container" style="flex: 1;">
+            <h3>手牌</h3>
+            <div id="cpu-hand" class="cards-row hidden-hand">
+              <!-- CPU Hand Card images rendered face-down -->
+            </div>
+          </div>
+          
+          <!-- CPU Won Campaigns Area -->
+          <div class="won-campaigns-section" style="margin-top: 0; min-width: 150px;">
+            <h3>已奪取的戰役</h3>
+            <div id="cpu-won-campaigns" class="cards-row won-campaigns-row">
+              <!-- CPU Won Campaign Card images -->
+            </div>
           </div>
         </div>
         
@@ -94,20 +117,15 @@
             <!-- CPU Played Card images with transform states -->
           </div>
         </div>
-
-        <!-- CPU Won Campaigns Area -->
-        <div class="won-campaigns-section">
-          <h3>已奪取的戰役</h3>
-          <div id="cpu-won-campaigns" class="cards-row won-campaigns-row">
-            <!-- CPU Won Campaign Card images -->
-          </div>
-        </div>
       </section>
 
       <!-- 2. Central Display Section (Middle Layer) -->
       <section id="center-area" class="board-layer central-display-layer glass-card">
         <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 10px; margin-bottom: 20px;">
-          <h2 style="margin: 0; font-family: 'Noto Serif TC', serif; font-size: 1.4rem; color: var(--color-gold); letter-spacing: 1px; border: none; padding: 0;">中央展示列</h2>
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <h2 style="margin: 0; font-family: 'Noto Serif TC', serif; font-size: 1.4rem; color: var(--color-gold); letter-spacing: 1px; border: none; padding: 0;">中央展示列</h2>
+            <span id="center-draw-points-badge" class="draw-points-badge hidden" style="font-size: 0.9rem;">剩餘抽牌點：<span id="center-draw-points-val">0</span> 點</span>
+          </div>
           <button class="btn-primary-small btn-end-turn disabled" disabled style="padding: 4px 14px; font-size: 0.9rem; min-height: unset; height: auto; margin: 0;">結束回合</button>
         </div>
         
@@ -117,7 +135,7 @@
             <!-- Heaven Cards Display (天罡) -->
             <div class="deck-row deck-row-half">
               <div class="deck-pile-info">
-                <span class="deck-badge badge-heaven">天罡卡堆</span>
+                <span class="deck-badge badge-heaven">天罡卡堆 (消耗2點)</span>
                 <div class="deck-image-container">
                   <img src="./assets/images/天罡卡牌背.png" alt="天罡卡牌背" class="deck-back">
                   <span class="deck-count" id="heaven-deck-count">36</span>
@@ -131,7 +149,7 @@
             <!-- Earth Cards Display (地煞) -->
             <div class="deck-row deck-row-half">
               <div class="deck-pile-info">
-                <span class="deck-badge badge-earth">地煞卡堆</span>
+                <span class="deck-badge badge-earth">地煞卡堆 (消耗1點)</span>
                 <div class="deck-image-container">
                   <img src="./assets/images/地煞卡牌背.png" alt="地煞卡牌背" class="deck-back">
                   <span class="deck-count" id="earth-deck-count">72</span>
@@ -207,7 +225,6 @@
           <div class="section-sub-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
             <h3 style="margin: 0; font-size: 1rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
               我的出牌區 
-              <span class="tip-text">（點擊卡牌可旋轉測試狀態：活躍 ➔ 力竭 ➔ 倒置）</span>
             </h3>
             <button class="btn-primary-small btn-end-turn disabled" disabled style="padding: 4px 14px; font-size: 0.9rem; min-height: unset; height: auto; margin: 0;">結束回合</button>
           </div>
@@ -295,7 +312,7 @@
         
         <!-- CPU Results -->
         <div class="glass-card game-over-score-card" style="flex: 1; padding: 20px; border-color: rgba(255, 255, 255, 0.1); background: rgba(18, 18, 22, 0.6);">
-          <h3 style="color: var(--text-secondary); margin-top: 0; font-family: 'Noto Serif TC', serif;">朝廷官軍 (CPU)</h3>
+          <h3 style="color: var(--text-secondary); margin-top: 0; font-family: 'Noto Serif TC', serif;">朝廷軍官 (CPU)</h3>
           <div style="font-size: 2rem; font-weight: bold; color: var(--text-secondary); margin: 10px 0;" id="game-over-cpu-score">0 分</div>
           <div style="text-align: left; font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary);">
             <div>功績分數 (天罡卡): <span id="game-over-cpu-heaven-score">0</span> 分</div>
