@@ -57,16 +57,17 @@ function setupScriptedScenario() {
   gameState.center.heaven = [ { ...someHeaven } ];
   
   // 戰役卡區：只顯示 1 張小型戰役卡（條件需為 統御x1, 後勤x1）
-  const minorCampaign = minorCampaignCards.find(c => c.targets && c.targets.includes('統御') && c.targets.includes('後勤'));
+  const minorCampaign = campaignCards.find(c => c.type === '小型戰役' && c.requirements && c.requirements['統御'] && c.requirements['後勤']);
   gameState.center.minorCampaigns = [ 
-    minorCampaign || {
+    minorCampaign ? { ...minorCampaign } : {
       id: 'TUTORIAL_CAMPAIGN',
       type: '小型戰役',
       name: '糧草爭奪戰',
-      targets: ['統御', '後勤'],
-      effect: '無',
-      score: 1,
-      image: './assets/images/小型戰役牌背.png'
+      requirements: {'統御': 1, '後勤': 1},
+      conditionText: '統御x1, 後勤x1',
+      immediateEffect: '獲得 1 點免費延攬機會',
+      scoringCondition: '獲得 2 點戰功',
+      originalImage: 'MIC_001.png'
     } 
   ];
   gameState.center.majorCampaigns = []; // 清空重大戰役
