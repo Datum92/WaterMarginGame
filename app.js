@@ -2828,10 +2828,10 @@ function showCardDetail(card) {
 
 // 更新玩家出牌區的軍力符號統計
 function updatePlayerSymbolCounts() {
-  const activeCounts = { '步軍': 0, '水軍': 0, '騎軍': 0, '統御': 0, '斥侯': 0 };
+  const activeCounts = { '步軍': 0, '水軍': 0, '騎軍': 0, '統御': 0, '斥侯': 0, '後勤': 0 };
   let activeCounselorCount = 0;
   
-  const totalCounts = { '步軍': 0, '水軍': 0, '騎軍': 0, '統御': 0, '斥侯': 0 };
+  const totalCounts = { '步軍': 0, '水軍': 0, '騎軍': 0, '統御': 0, '斥侯': 0, '後勤': 0 };
   let totalCounselorCount = 0;
   
   const counselors = ["朱武", "蕭讓", "裴宣", "蔣敬"];
@@ -2879,6 +2879,7 @@ function updatePlayerSymbolCounts() {
         else if (sym === '騎軍') color = '#e74c3c';
         else if (sym === '統御') color = '#f39c12';
         else if (sym === '斥侯') color = '#9b59b6';
+        else if (sym === '後勤') color = '#1abc9c';
         
         html += `<span style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: ${color}; border: 1px solid ${color};">${sym}: ${count}</span>`;
       }
