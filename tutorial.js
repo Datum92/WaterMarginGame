@@ -45,20 +45,19 @@ function setupScriptedScenario() {
   
   // 玩家出牌區：1 張具備「統御」的地煞卡（例如 37 朱武）
   const zhuWu = earthCards.find(c => String(c.id) === '37');
-  const activeZhuWu = { ...zhuWu, isExhausted: false };
-
+  
   gameState.human.hand = [ { ...xiaoRang }, { ...wuYong } ];
-  gameState.human.playedArea = [ activeZhuWu ];
+  gameState.human.playedArea = [ { card: { ...zhuWu }, state: 'active' } ];
   
   // 中央展示列：只顯示 1 張地煞卡、1 張天罡卡
   const someEarth = earthCards[0];
   const someHeaven = heavenCards[0];
-  gameState.center.earth = [ { ...someEarth } ];
-  gameState.center.heaven = [ { ...someHeaven } ];
+  gameState.centerDisplay.earth = [ { ...someEarth } ];
+  gameState.centerDisplay.heaven = [ { ...someHeaven } ];
   
   // 戰役卡區：只顯示 1 張小型戰役卡（條件需為 統御x1, 後勤x1）
   const minorCampaign = campaignCards.find(c => c.type === '小型戰役' && c.requirements && c.requirements['統御'] && c.requirements['後勤']);
-  gameState.center.minorCampaigns = [ 
+  gameState.centerDisplay.minorCampaigns = [ 
     minorCampaign ? { ...minorCampaign } : {
       id: 'TUTORIAL_CAMPAIGN',
       type: '小型戰役',
@@ -70,7 +69,7 @@ function setupScriptedScenario() {
       originalImage: 'MIC_001.png'
     } 
   ];
-  gameState.center.majorCampaigns = []; // 清空重大戰役
+  gameState.centerDisplay.majorCampaigns = []; // 清空重大戰役
 
   // 隱藏對手與設定消耗點
   gameState.cpu.handCount = 0;
@@ -147,7 +146,7 @@ function applyTutorialStepLogic() {
       }
     });
     
-    if (!found && gameState.human.playedArea.some(c => String(c.id) === '46')) {
+    if (!found && gameState.human.playedArea.some(item => String(item.card.id) === '46')) {
         currentTutorialStep = 4;
         applyTutorialStepLogic();
     }
@@ -173,7 +172,7 @@ function applyTutorialStepLogic() {
     if (!found && gameState.selectionMode && gameState.selectionMode.type === 'exhaustCost') {
         currentTutorialStep = 4.5;
         applyTutorialStepLogic();
-    } else if (!found && gameState.human.playedArea.some(c => String(c.id) === '03' || String(c.id) === '3')) {
+    } else if (!found && gameState.human.playedArea.some(item => String(item.card.id) === '03' || String(item.card.id) === '3')) {
         currentTutorialStep = 5;
         applyTutorialStepLogic();
     }
@@ -182,8 +181,8 @@ function applyTutorialStepLogic() {
     setDialog('請點擊你出牌區中具備 👑統御 符號的兵將，將其「力竭 (橫置)」以完成出牌。');
     const playedCards = document.querySelectorAll('#player-played .card-wrapper');
     playedCards.forEach((cardEl, index) => {
-      const cardData = gameState.human.playedArea[index];
-      if (cardData && !cardData.isExhausted && cardData.symbols && cardData.symbols.includes('統御')) {
+      const cardItem = gameState.human.playedArea[index];
+      if (cardItem && cardItem.state === 'active' && cardItem.card.symbols && cardItem.card.symbols.includes('統御')) {
         cardEl.classList.add('tutorial-target');
         cardEl.addEventListener('click', () => {
           setTimeout(() => {
@@ -194,7 +193,7 @@ function applyTutorialStepLogic() {
       }
     });
     
-    if (gameState.human.playedArea.some(c => String(c.id) === '03' || String(c.id) === '3')) {
+    if (gameState.human.playedArea.some(item => String(item.card.id) === '03' || String(item.card.id) === '3')) {
         currentTutorialStep = 5;
         applyTutorialStepLogic();
     }
