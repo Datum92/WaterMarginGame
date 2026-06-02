@@ -218,7 +218,9 @@ function createCardDOM(card, options = {}) {
     
     // 加入水軍切換按鈕 (如果包含水軍且有可切換的選項)
     const waterOptions = options.waterOptions || ['水軍'];
-    if (card.symbols && card.symbols.includes('水軍') && playedState === 'active' && !isCPU && waterOptions.length > 1) {
+    const isWaterActive = playedState === 'active' && card.symbols && card.symbols.includes('水軍');
+    const isWaterInverted = playedState === 'inverted' && card.invertedSymbols && card.invertedSymbols.includes('水軍');
+    if ((isWaterActive || isWaterInverted) && !isCPU && waterOptions.length > 1) {
       const item = options.playedItem;
       const current = (item && item.waterTransformation && waterOptions.includes(item.waterTransformation)) ? item.waterTransformation : '水軍';
       
@@ -1420,7 +1422,7 @@ function getEffectiveSymbols(playerKey) {
       totalCounselorCount++;
       if (counselorSymbol) totalSymbols.push(mapCardSymbol(counselorSymbol));
     } else {
-      const allSyms = item.card.symbols || [];
+      const allSyms = (item.state === 'inverted' && item.card.invertedSymbols) ? item.card.invertedSymbols : (item.card.symbols || []);
       allSyms.forEach(sym => totalSymbols.push(mapCardSymbol(sym)));
     }
     
