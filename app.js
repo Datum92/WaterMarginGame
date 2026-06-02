@@ -215,6 +215,44 @@ function createCardDOM(card, options = {}) {
         }
       }
     }
+    
+    // 加入水軍切換按鈕 (如果包含水軍且有可切換的選項)
+    const waterOptions = options.waterOptions || ['水軍'];
+    if (card.symbols && card.symbols.includes('水軍') && playedState === 'active' && !isCPU && waterOptions.length > 1) {
+      const item = options.playedItem;
+      const current = (item && item.waterTransformation && waterOptions.includes(item.waterTransformation)) ? item.waterTransformation : '水軍';
+      
+      const toggleWrapper = document.createElement('div');
+      toggleWrapper.className = 'water-toggle';
+      
+      let htmlContent = '';
+      waterOptions.forEach((opt, idx) => {
+        const isCurrent = current === opt;
+        htmlContent += `<span class="w-opt" data-sym="${opt}" style="cursor:pointer; padding: 2px 4px; border-radius: 4px; color: ${isCurrent ? '#fff' : '#888'}; background: ${isCurrent ? 'rgba(52, 152, 219, 0.4)' : 'transparent'}; font-weight: ${isCurrent ? 'bold' : 'normal'};">${opt}</span>`;
+        if (idx < waterOptions.length - 1) htmlContent += `<span style="color:#666;">|</span>`;
+      });
+      
+      // If there's already a toggle (unlikely for counselors, but just in case), offset this one higher
+      const topOffset = isCounselor ? '-50px' : '-25px';
+      
+      toggleWrapper.innerHTML = htmlContent;
+      toggleWrapper.style.cssText = `position: absolute; top: ${topOffset}; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); border-radius: 12px; padding: 2px 6px; display: flex; gap: 4px; z-index: 10; font-size: 0.75rem; white-space: nowrap; border: 1px solid rgba(52, 152, 219, 0.5);`;
+      
+      wrapper.appendChild(toggleWrapper);
+      
+      if (item) {
+        setTimeout(() => {
+          const opts = toggleWrapper.querySelectorAll('.w-opt');
+          opts.forEach(opt => {
+            opt.addEventListener('click', (e) => {
+              e.stopPropagation();
+              item.waterTransformation = opt.getAttribute('data-sym');
+              if (typeof renderAll === 'function') renderAll();
+            });
+          });
+        }, 0);
+      }
+    }
   } else {
     img.classList.add('state-active');
   }
@@ -978,12 +1016,17 @@ function renderPlayerPlayed() {
   const container = document.getElementById('player-played');
   container.innerHTML = '';
   
+  // 取得當前的有效符號狀態（包含水軍的轉換選項）
+  const stats = getEffectiveSymbols('human');
+  const waterOptions = stats.waterOptions;
+  
   gameState.human.playedArea.forEach((playedItem, index) => {
     const el = createCardDOM(playedItem.card, {
       isFaceUp: true,
       isPlayed: true,
       playedState: playedItem.state,
       playedItem: playedItem,
+      waterOptions: waterOptions,
       onClick: () => {
         // 1. 如果在選擇模式中
         if (gameState.selectionMode) {
@@ -1317,19 +1360,20 @@ function renderInteractionBanner() {
   }
 }
 
-// 取得目前出牌區的有效符號與活躍卡牌 (支援天罡卡全域轉換與軍師符號)
+// 取得目前出牌區的有效符號與活躍卡牌 (支援天罡卡水軍動態轉換與軍師符號)
 function getEffectiveSymbols(playerKey) {
   const area = gameState[playerKey].playedArea;
   const symbolMap = { '步軍': '步軍', '水軍': '水軍', '騎軍': '騎軍', '統御': '統御', '斥侯': '斥侯', '後勤': '後勤', '戰役': '戰役' };
   
-  // 1. 全域符號轉換 (例如阮小七的水軍轉斥侯)
+  // 1. 收集水軍的可用選項 (基於阮氏兄弟)
+  const waterOptions = new Set(['水軍']);
   area.forEach(item => {
     if (item.state === 'active') {
       const effect = item.card.specialEffect || '';
-      if (effect.includes('水軍符號便可以視為斥侯符號來使用')) symbolMap['水軍'] = '斥侯';
-      else if (effect.includes('水軍符號便可以視為騎軍符號來使用')) symbolMap['水軍'] = '騎軍';
-      else if (effect.includes('水軍符號便可以視為步軍符號來使用')) symbolMap['水軍'] = '步軍';
-      else if (effect.includes('水軍符號便可以視為統御符號來使用')) symbolMap['水軍'] = '統御';
+      if (effect.includes('水軍符號便可以視為斥侯符號來使用')) waterOptions.add('斥侯');
+      if (effect.includes('水軍符號便可以視為騎軍符號來使用')) waterOptions.add('騎軍');
+      if (effect.includes('水軍符號便可以視為步軍符號來使用')) waterOptions.add('步軍');
+      if (effect.includes('水軍符號便可以視為統御符號來使用')) waterOptions.add('統御');
     }
   });
 
@@ -1352,13 +1396,27 @@ function getEffectiveSymbols(playerKey) {
       counselorSymbol = item.currentCounselorSymbol;
     }
     
+    // 決定該卡牌的水軍符號當前被轉換成什麼
+    let waterSymbol = '水軍';
+    if (item.waterTransformation && waterOptions.has(item.waterTransformation)) {
+      waterSymbol = item.waterTransformation;
+    } else {
+      item.waterTransformation = '水軍'; // 重設或預設為水軍
+    }
+    
+    // 將該卡牌的原始符號映射為轉換後的符號 (水軍 -> waterSymbol)
+    const mapCardSymbol = (sym) => {
+      if (sym === '水軍') return waterSymbol;
+      return sym;
+    };
+    
     // 累積總計 (所有卡牌)
     if (isCounselor) {
       totalCounselorCount++;
-      if (counselorSymbol) totalSymbols.push(symbolMap[counselorSymbol] || counselorSymbol);
+      if (counselorSymbol) totalSymbols.push(mapCardSymbol(counselorSymbol));
     } else {
       const allSyms = item.card.symbols || [];
-      allSyms.forEach(sym => totalSymbols.push(symbolMap[sym] || sym));
+      allSyms.forEach(sym => totalSymbols.push(mapCardSymbol(sym)));
     }
     
     // 活躍可用
@@ -1374,8 +1432,8 @@ function getEffectiveSymbols(playerKey) {
       syms = item.card.invertedSymbols || [];
     }
     
-    // 套用全域轉換並加入 activeCards 供發動戰役檢核
-    const effectiveSyms = syms.map(sym => symbolMap[sym] || sym);
+    // 套用轉換並加入 activeCards 供發動戰役檢核
+    const effectiveSyms = syms.map(mapCardSymbol);
     effectiveSyms.forEach(sym => activeSymbols.push(sym));
     
     if (item.state === 'active' || item.state === 'inverted') {
@@ -1387,7 +1445,7 @@ function getEffectiveSymbols(playerKey) {
     }
   });
   
-  return { activeSymbols, totalSymbols, activeCounselorCount, totalCounselorCount, activeCards, symbolMap };
+  return { activeSymbols, totalSymbols, activeCounselorCount, totalCounselorCount, activeCards, waterOptions: Array.from(waterOptions) };
 }
 
 // 減免下拉選單值改變時的回調
