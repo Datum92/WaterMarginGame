@@ -624,8 +624,10 @@ function renderCenterDisplay() {
     const el = createCardDOM(card, {
       isFaceUp: true,
       onClick: () => {
-        // 如果是玩家回合且未執行其他主要行動，則點擊進行招募；否則僅檢視卡片資訊
-        if (gameState.currentTurn === 'human' && !gameState.turnActionTaken && gameState.activeActionType !== 'deploy') {
+        const canRecruit = gameState.currentTurn === 'human' && 
+                           ((!gameState.turnActionTaken && gameState.activeActionType !== 'deploy') || 
+                            (gameState.selectionMode && gameState.selectionMode.type === 'freeDraw'));
+        if (canRecruit) {
           recruitCard(card, 'display_heaven', el);
         } else {
           showCardDetail(card);
@@ -642,7 +644,10 @@ function renderCenterDisplay() {
     const el = createCardDOM(card, {
       isFaceUp: true,
       onClick: () => {
-        if (gameState.currentTurn === 'human' && !gameState.turnActionTaken && gameState.activeActionType !== 'deploy') {
+        const canRecruit = gameState.currentTurn === 'human' && 
+                           ((!gameState.turnActionTaken && gameState.activeActionType !== 'deploy') || 
+                            (gameState.selectionMode && gameState.selectionMode.type === 'freeDraw'));
+        if (canRecruit) {
           recruitCard(card, 'display_earth', el);
         } else {
           showCardDetail(card);
