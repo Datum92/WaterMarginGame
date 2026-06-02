@@ -353,12 +353,22 @@ function renderAll() {
   }
   
   // 3. 剩餘抽牌點顯示
+  const centerDrawPointsBadge = document.getElementById('center-draw-points-badge');
+  const centerDrawPointsVal = document.getElementById('center-draw-points-val');
+
   if ((gameState.playerActionState === 'recruit' && gameState.currentTurn === 'human') || 
       (gameState.selectionMode && gameState.selectionMode.type === 'freeDraw')) {
     drawPointsBadge.classList.remove('hidden');
     drawPointsVal.textContent = gameState.drawPointsRemaining;
+    if (centerDrawPointsBadge) {
+      centerDrawPointsBadge.classList.remove('hidden');
+      centerDrawPointsVal.textContent = gameState.drawPointsRemaining;
+    }
   } else {
     drawPointsBadge.classList.add('hidden');
+    if (centerDrawPointsBadge) {
+      centerDrawPointsBadge.classList.add('hidden');
+    }
   }
   
   // 4. 結束回合按鈕狀態
