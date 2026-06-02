@@ -182,6 +182,39 @@ function createCardDOM(card, options = {}) {
     const stateNames = { 'active': '活躍', 'exhausted': '力竭', 'inverted': '倒置' };
     badge.textContent = stateNames[playedState] || '活躍';
     wrapper.appendChild(badge);
+    
+    // 加入軍師切換按鈕 (如果是軍師且在玩家出牌區且活躍)
+    const isCounselor = ["朱武", "蕭讓", "裴宣", "蔣敬"].includes(card.name) || (card.specialEffect && card.specialEffect.includes("梁山軍師群"));
+    if (isCounselor && playedState === 'active' && !isCPU) {
+      if (card.symbols && card.symbols.length >= 2) {
+        const s1 = card.symbols[0];
+        const s2 = card.symbols[1];
+        const item = options.playedItem;
+        const current = (item && item.currentCounselorSymbol) ? item.currentCounselorSymbol : s1;
+        
+        const toggleWrapper = document.createElement('div');
+        toggleWrapper.className = 'counselor-toggle';
+        toggleWrapper.innerHTML = `
+          <span class="c-opt" data-sym="${s1}" style="cursor:pointer; padding: 2px 4px; border-radius: 4px; color: ${current === s1 ? '#fff' : '#888'}; background: ${current === s1 ? 'rgba(255,255,255,0.3)' : 'transparent'}; font-weight: ${current === s1 ? 'bold' : 'normal'};">${s1}</span>
+          <span style="color:#666;">|</span>
+          <span class="c-opt" data-sym="${s2}" style="cursor:pointer; padding: 2px 4px; border-radius: 4px; color: ${current === s2 ? '#fff' : '#888'}; background: ${current === s2 ? 'rgba(255,255,255,0.3)' : 'transparent'}; font-weight: ${current === s2 ? 'bold' : 'normal'};">${s2}</span>
+        `;
+        wrapper.appendChild(toggleWrapper);
+        
+        if (item) {
+          setTimeout(() => {
+            const opts = toggleWrapper.querySelectorAll('.c-opt');
+            opts.forEach(opt => {
+              opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                item.currentCounselorSymbol = opt.getAttribute('data-sym');
+                if (typeof renderAll === 'function') renderAll();
+              });
+            });
+          }, 0);
+        }
+      }
+    }
   } else {
     img.classList.add('state-active');
   }
@@ -950,6 +983,7 @@ function renderPlayerPlayed() {
       isFaceUp: true,
       isPlayed: true,
       playedState: playedItem.state,
+      playedItem: playedItem,
       onClick: () => {
         // 1. 如果在選擇模式中
         if (gameState.selectionMode) {
@@ -1283,6 +1317,79 @@ function renderInteractionBanner() {
   }
 }
 
+// 取得目前出牌區的有效符號與活躍卡牌 (支援天罡卡全域轉換與軍師符號)
+function getEffectiveSymbols(playerKey) {
+  const area = gameState[playerKey].playedArea;
+  const symbolMap = { '步軍': '步軍', '水軍': '水軍', '騎軍': '騎軍', '統御': '統御', '斥侯': '斥侯', '後勤': '後勤', '戰役': '戰役' };
+  
+  // 1. 全域符號轉換 (例如阮小七的水軍轉斥侯)
+  area.forEach(item => {
+    if (item.state === 'active') {
+      const effect = item.card.specialEffect || '';
+      if (effect.includes('水軍符號便可以視為斥侯符號來使用')) symbolMap['水軍'] = '斥侯';
+      else if (effect.includes('水軍符號便可以視為騎軍符號來使用')) symbolMap['水軍'] = '騎軍';
+      else if (effect.includes('水軍符號便可以視為步軍符號來使用')) symbolMap['水軍'] = '步軍';
+      else if (effect.includes('水軍符號便可以視為統御符號來使用')) symbolMap['水軍'] = '統御';
+    }
+  });
+
+  const activeSymbols = [];
+  const totalSymbols = [];
+  let activeCounselorCount = 0;
+  let totalCounselorCount = 0;
+  const activeCards = [];
+  const counselors = ["朱武", "蕭讓", "裴宣", "蔣敬"];
+  
+  area.forEach((item, index) => {
+    const isCounselor = counselors.includes(item.card.name) || (item.card.specialEffect && item.card.specialEffect.includes("梁山軍師群"));
+    
+    // 決定軍師當前啟用的符號
+    let counselorSymbol = null;
+    if (isCounselor) {
+      if (!item.currentCounselorSymbol && item.card.symbols && item.card.symbols.length > 0) {
+        item.currentCounselorSymbol = item.card.symbols[0]; // 預設使用第一個
+      }
+      counselorSymbol = item.currentCounselorSymbol;
+    }
+    
+    // 累積總計 (所有卡牌)
+    if (isCounselor) {
+      totalCounselorCount++;
+      if (counselorSymbol) totalSymbols.push(symbolMap[counselorSymbol] || counselorSymbol);
+    } else {
+      const allSyms = item.card.symbols || [];
+      allSyms.forEach(sym => totalSymbols.push(symbolMap[sym] || sym));
+    }
+    
+    // 活躍可用
+    let syms = [];
+    if (item.state === 'active') {
+      if (isCounselor) {
+        activeCounselorCount++;
+        if (counselorSymbol) syms.push(counselorSymbol);
+      } else {
+        syms = item.card.symbols || [];
+      }
+    } else if (item.state === 'inverted') {
+      syms = item.card.invertedSymbols || [];
+    }
+    
+    // 套用全域轉換並加入 activeCards 供發動戰役檢核
+    const effectiveSyms = syms.map(sym => symbolMap[sym] || sym);
+    effectiveSyms.forEach(sym => activeSymbols.push(sym));
+    
+    if (item.state === 'active' || item.state === 'inverted') {
+      activeCards.push({
+        index: index,
+        name: item.card.name,
+        symbols: effectiveSyms
+      });
+    }
+  });
+  
+  return { activeSymbols, totalSymbols, activeCounselorCount, totalCounselorCount, activeCards, symbolMap };
+}
+
 // 減免下拉選單值改變時的回調
 function onCampaignDiscountChange(discountIdx, value) {
   if (gameState.selectionMode && gameState.selectionMode.type === 'campaignSelection') {
@@ -1419,28 +1526,11 @@ function completeMilitaryAction() {
 function checkPresenceCondition(playerKey, condition) {
   if (!condition || condition === '-' || condition === '無') return false;
   
-  // 收集該玩家出牌區所有活躍/倒置兵將提供的符號
-  const activeSymbols = [];
+  const stats = getEffectiveSymbols(playerKey);
+  const activeSymbols = stats.activeSymbols;
+  const activeCards = stats.activeCards;
   
-  // 建立虛擬活躍兵將清單用於 canPayCampaignRequirements 搜尋
-  const activeCards = [];
-  gameState[playerKey].playedArea.forEach((item, index) => {
-    if (item.state === 'active') {
-      activeCards.push({
-        index: index,
-        name: item.card.name,
-        symbols: item.card.symbols
-      });
-    } else if (item.state === 'inverted') {
-      activeCards.push({
-        index: index,
-        name: item.card.name,
-        symbols: item.card.invertedSymbols || []
-      });
-    }
-  });
-  
-  // 依字串解析所需符號與對應數量
+  // 解析條件所需符號與數量
   const reqSymbols = {
     '統御': 0, '步軍': 0, '騎軍': 0, '水軍': 0, '斥侯': 0, '後勤': 0
   };
@@ -2829,41 +2919,15 @@ function showCardDetail(card) {
 // 更新玩家出牌區的軍力符號統計
 function updatePlayerSymbolCounts() {
   const activeCounts = { '步軍': 0, '水軍': 0, '騎軍': 0, '統御': 0, '斥侯': 0, '後勤': 0 };
-  let activeCounselorCount = 0;
-  
   const totalCounts = { '步軍': 0, '水軍': 0, '騎軍': 0, '統御': 0, '斥侯': 0, '後勤': 0 };
-  let totalCounselorCount = 0;
   
-  const counselors = ["朱武", "蕭讓", "裴宣", "蔣敬"];
+  const stats = getEffectiveSymbols('human');
   
-  gameState.human.playedArea.forEach(item => {
-    const isCounselor = counselors.includes(item.card.name) || (item.card.specialEffect && item.card.specialEffect.includes("梁山軍師群"));
-    
-    // 1. 總計累積 (只要打出就算)
-    if (isCounselor) {
-      totalCounselorCount++;
-    } else {
-      const allSyms = item.card.symbols || [];
-      allSyms.forEach(sym => {
-        if (totalCounts[sym] !== undefined) totalCounts[sym]++;
-      });
-    }
-    
-    // 2. 當前可用 (活躍 或 倒置)
-    let syms = [];
-    if (item.state === 'active') {
-      if (isCounselor) {
-        activeCounselorCount++;
-      } else {
-        syms = item.card.symbols || [];
-      }
-    } else if (item.state === 'inverted') {
-      syms = item.card.invertedSymbols || [];
-    }
-    
-    syms.forEach(sym => {
-      if (activeCounts[sym] !== undefined) activeCounts[sym]++;
-    });
+  stats.activeSymbols.forEach(sym => {
+    if (activeCounts[sym] !== undefined) activeCounts[sym]++;
+  });
+  stats.totalSymbols.forEach(sym => {
+    if (totalCounts[sym] !== undefined) totalCounts[sym]++;
   });
   
   const renderCounts = (counts, cCount, containerId) => {
@@ -2892,8 +2956,8 @@ function updatePlayerSymbolCounts() {
     container.innerHTML = html;
   };
   
-  renderCounts(activeCounts, activeCounselorCount, 'player-symbol-counts-active');
-  renderCounts(totalCounts, totalCounselorCount, 'player-symbol-counts-total');
+  renderCounts(activeCounts, stats.activeCounselorCount, 'player-symbol-counts-active');
+  renderCounts(totalCounts, stats.totalCounselorCount, 'player-symbol-counts-total');
 }
 
 // 註冊 Event Listeners
