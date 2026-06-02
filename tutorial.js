@@ -31,8 +31,10 @@ function initTutorialMode() {
   // 啟動遮罩與對話框
   const mask = document.getElementById('tutorial-mask');
   const dialog = document.getElementById('tutorial-dialog-container');
+  const gameContainer = document.getElementById('game-container');
   if (mask) mask.classList.remove('hidden');
   if (dialog) dialog.classList.remove('hidden');
+  if (gameContainer) gameContainer.classList.add('tutorial-active');
   
   // 重新渲染畫面以套用被覆寫的資料
   window.renderAll();
@@ -101,6 +103,14 @@ function clearTargets() {
   document.querySelectorAll('.tutorial-target').forEach(el => {
     el.classList.remove('tutorial-target');
   });
+  const mask = document.getElementById('tutorial-mask');
+  if (mask) mask.classList.remove('dim-disabled');
+}
+
+function setTarget(cardEl) {
+  cardEl.classList.add('tutorial-target');
+  const mask = document.getElementById('tutorial-mask');
+  if (mask) mask.classList.add('dim-disabled');
 }
 
 function applyTutorialStepLogic() {
@@ -116,7 +126,7 @@ function applyTutorialStepLogic() {
     setDialog('你有 2 點抽牌點。請點擊中央展示列的地煞卡（耗 1 點）將其延攬至手牌。');
     const earthCardEl = document.querySelector('#center-earth .card-wrapper');
     if (earthCardEl) {
-      earthCardEl.classList.add('tutorial-target');
+      setTarget(earthCardEl);
       earthCardEl.addEventListener('click', () => {
         setTimeout(() => {
           currentTutorialStep = 3;
@@ -135,7 +145,7 @@ function applyTutorialStepLogic() {
     handCards.forEach(cardEl => {
       const img = cardEl.querySelector('img');
       if (img && img.src.includes('046')) {
-        cardEl.classList.add('tutorial-target');
+        setTarget(cardEl);
         found = true;
         cardEl.addEventListener('click', () => {
           setTimeout(() => {
@@ -158,7 +168,7 @@ function applyTutorialStepLogic() {
     handCards.forEach(cardEl => {
       const img = cardEl.querySelector('img');
       if (img && img.src.includes('HF_003')) {
-        cardEl.classList.add('tutorial-target');
+        setTarget(cardEl);
         found = true;
         cardEl.addEventListener('click', () => {
           setTimeout(() => {
@@ -183,7 +193,7 @@ function applyTutorialStepLogic() {
     playedCards.forEach((cardEl, index) => {
       const cardItem = gameState.human.playedArea[index];
       if (cardItem && cardItem.state === 'active' && cardItem.card.symbols && cardItem.card.symbols.includes('統御')) {
-        cardEl.classList.add('tutorial-target');
+        setTarget(cardEl);
         cardEl.addEventListener('click', () => {
           setTimeout(() => {
             currentTutorialStep = 5;
@@ -202,7 +212,7 @@ function applyTutorialStepLogic() {
     setDialog('你目前的活躍軍力滿足了戰役需求！請點擊上方的【小型戰役卡】。');
     const campaignEl = document.querySelector('#center-minor .card-wrapper');
     if (campaignEl) {
-      campaignEl.classList.add('tutorial-target');
+      setTarget(campaignEl);
       campaignEl.addEventListener('click', () => {
         setTimeout(() => {
           currentTutorialStep = 6;
@@ -223,8 +233,10 @@ function exitTutorialMode() {
   isTutorialMode = false;
   const mask = document.getElementById('tutorial-mask');
   const dialog = document.getElementById('tutorial-dialog-container');
+  const gameContainer = document.getElementById('game-container');
   if (mask) mask.classList.add('hidden');
   if (dialog) dialog.classList.add('hidden');
+  if (gameContainer) gameContainer.classList.remove('tutorial-active');
   clearTargets();
   
   document.getElementById('game-container').classList.add('hidden');

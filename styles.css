@@ -1196,6 +1196,10 @@ body {
 }
 
 /* Interactive Tutorial System */
+#game-container.tutorial-active {
+  z-index: 1000;
+  pointer-events: none;
+}
 .tutorial-mask {
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;
@@ -1203,17 +1207,22 @@ body {
   pointer-events: auto;
   z-index: 999;
 }
-.tutorial-target {
-  position: relative !important;
-  z-index: 1000 !important;
-  pointer-events: auto !important;
-  box-shadow: 0 0 15px 5px rgba(255, 255, 0, 0.8), 0 0 30px rgba(212, 175, 55, 0.6) !important;
-  border-radius: 8px;
-  animation: pulse-glow 1.5s infinite alternate;
+.tutorial-mask.dim-disabled {
+  background: transparent;
 }
-@keyframes pulse-glow {
-  from { box-shadow: 0 0 10px 2px rgba(255,255,0,0.6); }
-  to { box-shadow: 0 0 20px 8px rgba(255,255,0,1); }
+.tutorial-target, .tutorial-target * {
+  position: relative !important;
+  z-index: 1002 !important;
+  pointer-events: auto !important;
+}
+.tutorial-target {
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7), 0 0 15px 5px rgba(255, 255, 0, 0.8), 0 0 30px rgba(212, 175, 55, 0.6) !important;
+  border-radius: 8px;
+  animation: tutorial-pulse 1.5s infinite alternate;
+}
+@keyframes tutorial-pulse {
+  from { box-shadow: 0 0 0 9999px rgba(0,0,0,0.7), 0 0 10px 2px rgba(255,255,0,0.5); }
+  to { box-shadow: 0 0 0 9999px rgba(0,0,0,0.7), 0 0 20px 8px rgba(255,255,0,1); }
 }
 #tutorial-dialog-container {
   position: fixed;
@@ -1233,7 +1242,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 15px;
-  pointer-events: auto;
+  pointer-events: none; /* Allow clicks to pass through the dialog background */
 }
 #tutorial-dialog-text {
   font-size: 1.15rem;
@@ -1243,4 +1252,5 @@ body {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  pointer-events: auto; /* Keep buttons clickable */
 }
