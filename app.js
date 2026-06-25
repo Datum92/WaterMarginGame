@@ -194,33 +194,24 @@ function createCardDOM(card, options = {}) {
         
         const toggleWrapper = document.createElement('div');
         toggleWrapper.className = 'counselor-toggle';
-        
-        const opt1 = document.createElement('span');
-        opt1.className = `symbol-option c-opt ${current === s1 ? 'is-selected' : ''}`;
-        opt1.textContent = s1;
-        
-        const divider = document.createElement('span');
-        divider.className = 'toggle-divider';
-        divider.textContent = '|';
-        
-        const opt2 = document.createElement('span');
-        opt2.className = `symbol-option c-opt ${current === s2 ? 'is-selected' : ''}`;
-        opt2.textContent = s2;
-        
-        toggleWrapper.appendChild(opt1);
-        toggleWrapper.appendChild(divider);
-        toggleWrapper.appendChild(opt2);
-        
+        toggleWrapper.innerHTML = `
+          <span class="c-opt" data-sym="${s1}" style="cursor:pointer; padding: 2px 4px; border-radius: 4px; color: ${current === s1 ? '#fff' : '#888'}; background: ${current === s1 ? 'rgba(255,255,255,0.3)' : 'transparent'}; font-weight: ${current === s1 ? 'bold' : 'normal'};">${s1}</span>
+          <span style="color:#666;">|</span>
+          <span class="c-opt" data-sym="${s2}" style="cursor:pointer; padding: 2px 4px; border-radius: 4px; color: ${current === s2 ? '#fff' : '#888'}; background: ${current === s2 ? 'rgba(255,255,255,0.3)' : 'transparent'}; font-weight: ${current === s2 ? 'bold' : 'normal'};">${s2}</span>
+        `;
         wrapper.appendChild(toggleWrapper);
         
         if (item) {
-          [opt1, opt2].forEach(opt => {
-            opt.addEventListener('click', (e) => {
-              e.stopPropagation();
-              item.currentCounselorSymbol = opt.textContent;
-              if (typeof renderAll === 'function') renderAll();
+          setTimeout(() => {
+            const opts = toggleWrapper.querySelectorAll('.c-opt');
+            opts.forEach(opt => {
+              opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                item.currentCounselorSymbol = opt.getAttribute('data-sym');
+                if (typeof renderAll === 'function') renderAll();
+              });
             });
-          });
+          }, 0);
         }
       }
     }
@@ -235,35 +226,35 @@ function createCardDOM(card, options = {}) {
       
       const toggleWrapper = document.createElement('div');
       toggleWrapper.className = 'water-toggle';
-      if (isCounselor) toggleWrapper.classList.add('water-toggle-offset');
       
+      let htmlContent = '';
       waterOptions.forEach((opt, idx) => {
         const isCurrent = current === opt;
-        const optEl = document.createElement('span');
-        optEl.className = `symbol-option w-opt ${isCurrent ? 'is-selected' : ''}`;
-        optEl.textContent = opt;
-        
-        toggleWrapper.appendChild(optEl);
-        
-        if (idx < waterOptions.length - 1) {
-          const div = document.createElement('span');
-          div.className = 'toggle-divider';
-          div.textContent = '|';
-          toggleWrapper.appendChild(div);
-        }
-        
-        if (item) {
-          optEl.addEventListener('click', (e) => {
-            e.stopPropagation();
-            item.waterTransformation = opt;
-            if (typeof renderAll === 'function') renderAll();
-          });
-        }
+        htmlContent += `<span class="w-opt" data-sym="${opt}" style="cursor:pointer; padding: 2px 4px; border-radius: 4px; color: ${isCurrent ? '#fff' : '#888'}; background: ${isCurrent ? 'rgba(52, 152, 219, 0.4)' : 'transparent'}; font-weight: ${isCurrent ? 'bold' : 'normal'};">${opt}</span>`;
+        if (idx < waterOptions.length - 1) htmlContent += `<span style="color:#666;">|</span>`;
       });
       
+      // If there's already a toggle (unlikely for counselors, but just in case), offset this one higher
+      const topOffset = isCounselor ? '-50px' : '-25px';
+      
+      toggleWrapper.innerHTML = htmlContent;
+      toggleWrapper.style.cssText = `position: absolute; top: ${topOffset}; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); border-radius: 12px; padding: 2px 6px; display: flex; gap: 4px; z-index: 10; font-size: 0.75rem; white-space: nowrap; border: 1px solid rgba(52, 152, 219, 0.5);`;
+      
       wrapper.appendChild(toggleWrapper);
+      
+      if (item) {
+        setTimeout(() => {
+          const opts = toggleWrapper.querySelectorAll('.w-opt');
+          opts.forEach(opt => {
+            opt.addEventListener('click', (e) => {
+              e.stopPropagation();
+              item.waterTransformation = opt.getAttribute('data-sym');
+              if (typeof renderAll === 'function') renderAll();
+            });
+          });
+        }, 0);
+      }
     }
-
   } else {
     img.classList.add('state-active');
   }
@@ -291,17 +282,6 @@ function createCardDOM(card, options = {}) {
 
 // 渲染所有區域
 function renderAll() {
-  const grid = document.querySelector('.game-grid');
-  if (grid) {
-    if (gameState.currentTurn === 'human') {
-      grid.classList.add('human-turn-active');
-      grid.classList.remove('cpu-turn-active');
-    } else {
-      grid.classList.add('cpu-turn-active');
-      grid.classList.remove('human-turn-active');
-    }
-  }
-  
   renderDecksCount();
   renderCenterDisplay();
   renderPlayerHand();
@@ -324,7 +304,7 @@ function renderAll() {
   if (playedCountEl) {
     playedCountEl.textContent = playedCount;
     // Color: green < 9, amber 9-11, red 12+
-    const badge = playedCountEl.closest('.stat-row');
+    const badge = playedCountEl.closest('.hand-count-badge');
     if (badge) {
       if (playedCount >= 12) {
         badge.style.color = '#e74c3c';
@@ -372,7 +352,13 @@ function renderAll() {
     actionBadge.style.color = '#a0a0b0';
   }
   
-  // 3. 剩餘抽牌點顯示 (已整合至 Header)
+  // 3. 剩餘抽牌點顯示
+  const centerDrawPointsBadge = document.getElementById('center-draw-points-badge');
+  const centerDrawPointsVal = document.getElementById('center-draw-points-val');
+
+  if (centerDrawPointsVal) {
+    centerDrawPointsVal.textContent = gameState.drawPointsRemaining;
+  }
 
   // 3. 剩餘抽牌點 (Header badge)
   if ((gameState.playerActionState === 'recruit' && gameState.currentTurn === 'human') || 
@@ -387,10 +373,10 @@ function renderAll() {
   endTurnBtns.forEach(btn => {
     if (gameState.currentTurn === 'human' && 
         (gameState.playerActionState === 'finished' || gameState.playerActionState === 'recruit')) {
-      btn.classList.remove('is-disabled');
+      btn.classList.remove('disabled');
       btn.removeAttribute('disabled');
     } else {
-      btn.classList.add('is-disabled');
+      btn.classList.add('disabled');
       btn.setAttribute('disabled', 'true');
     }
   });
@@ -582,17 +568,17 @@ function resolveGameEnd() {
     final.breakdown.forEach(item => {
       if (item.type === 'heaven') {
         const earnedColor = item.earned > 0 ? '#f39c12' : 'rgba(255,255,255,0.3)';
-        html += `<div class="score-breakdown-row">
-          <span>⚔ <strong>${item.name}</strong>
+        html += `<div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid rgba(255,255,255,0.05); padding:3px 0;">
+          <span>⚔ <strong style="color:#f0f0f5;">${item.name}</strong>
             <span style="font-size:0.78rem; color:rgba(255,255,255,0.4);"> (${item.condition})</span>
             <span style="font-size:0.78rem; color:rgba(255,255,255,0.35);"> × ${item.groups} 組</span>
           </span>
-          <span class="score-earned" style="color:${earnedColor};">+${item.earned} 分</span>
+          <span style="color:${earnedColor}; font-weight:bold; min-width:48px; text-align:right;">+${item.earned} 分</span>
         </div>`;
       } else {
-        html += `<div class="score-breakdown-row campaign">
-          <span>🏅 <strong>${item.name}</strong></span>
-          <span class="score-earned" style="color:#2ecc71;">+${item.earned} 分</span>
+        html += `<div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid rgba(255,255,255,0.05); padding:3px 0;">
+          <span>🏅 <strong style="color:#2ecc71;">${item.name}</strong></span>
+          <span style="color:#2ecc71; font-weight:bold; min-width:48px; text-align:right;">+${item.earned} 分</span>
         </div>`;
       }
     });
@@ -1353,7 +1339,7 @@ function renderInteractionBanner() {
         discountsHtml += `
           <div class="discount-item" style="display: flex; align-items: center; gap: 5px;">
             <span style="color: var(--color-gold); font-size: 0.9rem;">【減免效果 #${idx + 1}】</span>
-            <select class="discount-select" onchange="onCampaignDiscountChange(${idx}, this.value)">
+            <select class="discount-select" onchange="onCampaignDiscountChange(${idx}, this.value)" style="background: #121216; color: #f0f0f5; border: 1px solid var(--color-gold); border-radius: 4px; padding: 2px 8px; cursor: pointer; outline: none; font-family: inherit;">
               <option value="">--不使用減免--</option>
               ${discOptions.map(opt => `<option value="${opt}" ${selectedVal === opt ? 'selected' : ''}>減免 ${opt}</option>`).join('')}
             </select>
@@ -1364,7 +1350,7 @@ function renderInteractionBanner() {
     }
     
     banner.innerHTML = `
-      <div class="campaign-selection-banner-content">
+      <div class="campaign-selection-banner-content" style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
         <div style="font-weight: bold; font-size: 1.1rem; color: var(--color-gold);">
           ⚔️ 正在參與戰役：【${campaignCard.name || campaignCard.id}】（${campaignCard.type}）
         </div>
@@ -1376,7 +1362,7 @@ function renderInteractionBanner() {
         </div>
         ${discountsHtml}
         <div style="margin-top: 6px; display: flex; gap: 15px;">
-          <button id="btn-confirm-campaign" class="btn-primary-small ${isSuccess ? '' : 'is-disabled'}" onclick="confirmCampaignParticipation()" ${isSuccess ? '' : 'disabled'} style="padding: 6px 16px; font-weight: bold;">確定參與戰役</button>
+          <button id="btn-confirm-campaign" class="btn-primary-small ${isSuccess ? '' : 'disabled'}" onclick="confirmCampaignParticipation()" ${isSuccess ? '' : 'disabled'} style="padding: 6px 16px; font-weight: bold;">確定參與戰役</button>
           <button id="btn-cancel-campaign" class="btn-secondary" onclick="cancelCampaignParticipation()" style="padding: 4px 14px; font-size: 0.9rem; min-height: unset; height: auto;">取消</button>
         </div>
       </div>
@@ -2773,11 +2759,11 @@ function updatePlayerSymbolCounts() {
         else if (sym === '斥侯') color = '#9b59b6';
         else if (sym === '後勤') color = '#1abc9c';
         
-        html += `<span class="stat-badge" style="color: ${color}; border-color: ${color};">${sym}: ${count}</span>`;
+        html += `<span style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: ${color}; border: 1px solid ${color};">${sym}: ${count}</span>`;
       }
     }
     if (cCount > 0) {
-      html += `<span class="stat-badge" style="color: #fff; border-color: #aaa;">軍師: ${cCount}</span>`;
+      html += `<span style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: #fff; border: 1px solid #aaa;">軍師: ${cCount}</span>`;
     }
     if (html === '') html = `<span style="font-size: 0.8rem; color: #666;">無</span>`;
     
@@ -3095,11 +3081,11 @@ function updatePlayerSymbolCounts() {
         else if (sym === '斥侯') color = '#9b59b6';
         else if (sym === '後勤') color = '#1abc9c';
         
-        html += `<span class="stat-badge" style="color: ${color}; border-color: ${color};">${sym}: ${count}</span>`;
+        html += `<span style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: ${color}; border: 1px solid ${color};">${sym}: ${count}</span>`;
       }
     }
     if (cCount > 0) {
-      html += `<span class="stat-badge" style="color: #fff; border-color: #aaa;">軍師: ${cCount}</span>`;
+      html += `<span style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: #fff; border: 1px solid #aaa;">軍師: ${cCount}</span>`;
     }
     if (html === '') html = `<span style="font-size: 0.8rem; color: #666;">無</span>`;
     
